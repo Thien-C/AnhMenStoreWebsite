@@ -1,0 +1,13 @@
+# Bỏ qua thư mục thư viện (ở mọi nơi)
+node_modules/
+*/node_modules/
+
+# Bỏ qua file môi trường chứa mật khẩu (QUAN TRỌNG)
+.env
+*/.env
+backend/.env
+
+# Bỏ qua các file log và file hệ thống rác
+*.log
+.DS_Store
+Thumbs.db
