@@ -136,8 +136,8 @@
 
     <footer class="bg-black text-white py-12 mt-12">
         <div class="container mx-auto px-4 text-center">
-            <h3 class="text-xl font-bold mb-4">ANH MEN STORE</h3>
-            <p class="text-gray-400 text-sm">Clone layout Coolmate for educational purpose.</p>
+            <h3 class="text-xl font-bold mb-4">ANHMEN STORE</h3>
+            <p class="text-gray-400 text-sm">Clone layout AnhMen for educational purpose.</p>
         </div>
     </footer>
 
@@ -152,7 +152,7 @@
                 </button>
 
                 <div id="auth-header" class="mb-6 text-center">
-                    <div class="text-blue-600 font-black text-2xl mb-2 tracking-tighter">COOL<span class="bg-blue-600 text-white px-1 rounded">CLUB</span></div>
+                    <div class="text-blue-600 font-black text-2xl mb-2 tracking-tighter">ANHMEN<span class="bg-blue-600 text-white px-1 rounded">CLUB</span></div>
                     <h2 class="text-xl font-bold mb-4">Rất nhiều đặc quyền và quyền lợi mua sắm đang chờ bạn</h2>
                     
                     <div class="grid grid-cols-3 gap-2 text-[10px] font-semibold text-gray-700">
@@ -166,7 +166,7 @@
                         </div>
                         <div class="border rounded-lg p-2 flex flex-col items-center justify-center h-20">
                             <svg class="w-6 h-6 mb-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Hoàn tiền CoolCash</span>
+                            <span>Hoàn tiền</span>
                         </div>
                     </div>
                 </div>
@@ -201,7 +201,7 @@
                 </form>
 
                 <form id="form-register" class="space-y-4 hidden">
-                    <p class="text-xs font-bold text-gray-600">Đăng ký thành viên CoolClub</p>
+                    <p class="text-xs font-bold text-gray-600">Đăng ký thành viên AnhMenClub</p>
                     <div class="flex gap-4">
                         <input type="text" id="reg-name" placeholder="Họ và tên" class="w-1/2 px-4 py-3 rounded-full border border-gray-300 focus:border-black focus:outline-none">
                         <input type="text" id="reg-phone" placeholder="Số điện thoại" class="w-1/2 px-4 py-3 rounded-full border border-gray-300 focus:border-black focus:outline-none">
@@ -360,10 +360,30 @@
         }
         // ... (Các hàm loadProducts cũ giữ nguyên) ...
         async function loadHomeData() {
-             // ... Code load sản phẩm giữ nguyên ...
-        }
-        loadHomeData();
+            const products = await API.get('/products');
+            
+            const winterContainer = document.getElementById('winter-products');
+            const runningContainer = document.getElementById('running-products');
 
+            if(Array.isArray(products) && products.length > 0) {
+                // Render vào Section Thu Đông
+                products.forEach(p => {
+                    winterContainer.innerHTML += renderProductCard(p);
+                });
+
+                // Render vào Section Chạy Bộ (Dùng lại data mẫu, thêm class width cố định cho slider)
+                products.slice(0, 5).forEach(p => {
+                    // Wrapper width cho slider
+                    const cardHtml = renderProductCard(p);
+                    const sliderItem = `<div class="w-[280px] snap-start flex-shrink-0">${cardHtml}</div>`;
+                    runningContainer.innerHTML += sliderItem;
+                });
+            } else {
+                winterContainer.innerHTML = '<p class="col-span-4 text-center py-10">Đang cập nhật sản phẩm...</p>';
+            }
+        }
+
+        loadHomeData();
     </script>
 </body>
 </html>
