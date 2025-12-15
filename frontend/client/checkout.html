@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh toán</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <h1 class="text-2xl font-bold mb-6 text-center">Thông Tin Giao Hàng</h1>
+        <form id="checkout-form" class="bg-white p-6 rounded shadow space-y-4">
+            <input type="text" id="name" placeholder="Họ tên người nhận" class="w-full border p-3 rounded" required>
+            <input type="text" id="phone" placeholder="Số điện thoại" class="w-full border p-3 rounded" required>
+            <textarea id="address" placeholder="Địa chỉ giao hàng" class="w-full border p-3 rounded" required></textarea>
+            
+            <select id="method" class="w-full border p-3 rounded">
+                <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                <option value="BANK">Chuyển khoản ngân hàng</option>
+            </select>
+
+            <button type="submit" class="w-full bg-black text-white py-3 rounded font-bold hover:bg-gray-800">ĐẶT HÀNG NGAY</button>
+        </form>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/cart.js"></script>
+    <script>
+        // Check login
+        if (!CartManager.getUser()) {
+            alert('Vui lòng đăng nhập để thanh toán!');
+            window.location.href = 'index.html';
+        }
+
+        // Auto fill nếu có thông tin (Giả sử User có lưu name/phone)
+        const user = CartManager.getUser();
+        if(user) {
+            document.getElementById('name').value = user.name || '';
+        }
+
+        document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                hoTen: document.getElementById('name').value,
+                soDienThoai: document.getElementById('phone').value,
+                diaChi: document.getElementById('address').value,
+                phuongThucTT: document.getElementById('method').value
+            };
+
+            const res = await API.post('/orders', data);
+            if (res.orderId) {
+                alert('Đặt hàng thành công! Mã đơn: ' + res.orderId);
+                window.location.href = 'index.html';
+            } else {
+                alert('Lỗi: ' + res.message);
+            }
+        });
+    </script>
+</body>
+</html>

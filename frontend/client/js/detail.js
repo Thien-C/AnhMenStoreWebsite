@@ -1,6 +1,3 @@
-// js/detail.js
-
-// Lấy ID từ URL (VD: product-detail.html?id=1)
 const urlParams = new URLSearchParams(window.location.search);
 const productId = urlParams.get('id');
 
@@ -18,7 +15,6 @@ if (productId) {
 }
 
 async function loadProductDetail(id) {
-    // 1. Gọi API lấy dữ liệu
     const data = await API.get(`/products/${id}`);
     
     if (!data || !data.variants) {
@@ -40,7 +36,6 @@ async function loadProductDetail(id) {
 function renderVariantOptions() {
     const variants = productData.variants;
 
-    // Lọc ra danh sách màu và size duy nhất (Unique)
     const uniqueColors = [...new Set(variants.map(v => v.color))];
     const uniqueSizes = [...new Set(variants.map(v => v.size))];
 
@@ -116,7 +111,9 @@ function checkVariant() {
             btnAdd.innerText = 'THÊM VÀO GIỎ';
             
             // Gán sự kiện thêm giỏ hàng (Phase 3 sẽ xử lý kỹ hơn)
-            btnAdd.onclick = () => addToCart(currentVariant.variantId);
+            btnAdd.onclick = function() {
+                addToCart(currentVariant.variantId);
+            };
         } else {
             stockEl.innerText = 'Hết hàng tạm thời';
             stockEl.className = 'text-sm mb-4 font-semibold text-red-600';
@@ -124,21 +121,19 @@ function checkVariant() {
         }
 
     } else {
-        // KHÔNG TỒN TẠI cặp màu size này (Ví dụ: Có Đen, Có size S, nhưng không có áo Đen size S)
         priceEl.innerText = '---';
-        stockEl.innerText = 'Phiên bản này không tồn tại';
-        stockEl.className = 'text-sm mb-4 font-semibold text-gray-500';
-        disableBuyButton(btnAdd);
+        stockEl.innerText = 'Phiên bản không tồn tại';
+        disableBtn(btnAdd);
     }
 }
 
-function disableBuyButton(btn) {
+function disableBtn(btn) {
     btn.disabled = true;
     btn.className = 'flex-1 bg-gray-300 text-gray-500 font-bold py-3 rounded-lg transition cursor-not-allowed';
-    btn.innerText = 'Tạm hết hàng / Không có sẵn';
+    btn.innerText = 'Vui lòng chọn biến thể';
 }
 
-function addToCart(variantId) {
-    // Phase 3 sẽ làm API gọi server
-    alert(`Đã thêm Variant ID: ${variantId} vào giỏ (Logic Server ở Phase 3)`);
+async function addToCart(variantId) {
+    const qty = 1; // Mặc định 1, sau này có thể thêm input số lượng
+    await CartManager.addToCart(variantId, qty);
 }
