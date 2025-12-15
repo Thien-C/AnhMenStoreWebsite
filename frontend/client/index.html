@@ -246,32 +246,27 @@
 
     <script src="js/api.js"></script>
     <script>
-        // ================= XỬ LÝ MODAL =================
+        // ================= 1. XỬ LÝ MODAL (POPUP) =================
         const modal = document.getElementById('auth-modal');
-        const headerAuth = document.getElementById('auth-header'); // Phần logo CoolClub
+        const headerAuth = document.getElementById('auth-header'); 
         const formLogin = document.getElementById('form-login');
         const formRegister = document.getElementById('form-register');
         const formForgot = document.getElementById('form-forgot');
 
-        // Hàm mở Modal
         function openAuthModal() {
             modal.classList.remove('hidden');
-            switchForm('login'); // Mặc định mở form login
+            switchForm('login'); 
         }
 
-        // Hàm đóng Modal
         function closeAuthModal() {
             modal.classList.add('hidden');
         }
 
-        // Hàm chuyển đổi Form
         function switchForm(type) {
-            // Ẩn tất cả
             formLogin.classList.add('hidden');
             formRegister.classList.add('hidden');
             formForgot.classList.add('hidden');
             
-            // Logic hiển thị Header (Quên mật khẩu thì ẩn Header CoolClub đi cho giống ảnh 3)
             if(type === 'forgot') {
                 headerAuth.classList.add('hidden');
                 formForgot.classList.remove('hidden');
@@ -279,28 +274,25 @@
                 headerAuth.classList.remove('hidden');
                 formRegister.classList.remove('hidden');
             } else {
-                // Login
                 headerAuth.classList.remove('hidden');
                 formLogin.classList.remove('hidden');
             }
         }
 
-        // ================= XỬ LÝ AUTH LOGIC =================
+        // ================= 2. XỬ LÝ AUTHENTICATION (GỌI API) =================
         const authBtn = document.getElementById('authBtn');
         const user = JSON.parse(localStorage.getItem('user'));
 
-        // 1. Kiểm tra trạng thái đăng nhập khi load trang
+        // Kiểm tra đăng nhập
         if(user) {
-            // Đã đăng nhập -> Hiển thị tên & Logic Đăng xuất
             renderLoggedInState(user);
         } else {
-            // Chưa đăng nhập -> Click vào Icon sẽ mở Modal
             authBtn.onclick = openAuthModal;
         }
 
         function renderLoggedInState(userData) {
             authBtn.innerHTML = `
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 cursor-pointer">
                     <span class="text-xs font-bold truncate max-w-[80px]">${userData.name}</span>
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </div>
@@ -313,13 +305,13 @@
             };
         }
 
-        // 2. Xử lý Submit Login
+        // Xử lý Đăng nhập
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-password').value;
             
-            // Gọi API (Giả sử bạn đã có class API từ bài trước)
+            // Gửi request về Backend -> Backend sẽ kiểm tra pass và trả về Token
             const res = await API.post('/auth/login', { Email: email, MatKhau: pass });
             
             if (res.token) {
@@ -333,7 +325,7 @@
             }
         });
 
-        // 3. Xử lý Submit Register
+        // Xử lý Đăng ký
         formRegister.addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
@@ -343,47 +335,89 @@
                 MatKhau: document.getElementById('reg-pass').value
             };
 
+            // Gửi request về Backend -> Backend sẽ Insert User và Insert GioHang
             const res = await API.post('/auth/register', data);
             if (res.userId) {
                 alert('Đăng ký thành công! Vui lòng đăng nhập.');
                 switchForm('login');
-                // Tự động điền email vừa đăng ký
                 document.getElementById('login-email').value = data.Email;
             } else {
                 alert(res.message || 'Đăng ký thất bại');
             }
         });
 
-        // ================= LOGIC SẢN PHẨM CŨ (Giữ nguyên) =================
+        // ================= 3. LOGIC HIỂN THỊ SẢN PHẨM =================
         function formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
         }
-        // ... (Các hàm loadProducts cũ giữ nguyên) ...
+
+        // --- HÀM BẠN ĐANG THIẾU ---
+        function renderProductCard(p) {
+            // Xử lý hiển thị màu
+            let colors = p.DS_Mau ? p.DS_Mau.split(',') : ['Mặc định'];
+            const displayColors = colors.slice(0, 3);
+            const extraColors = colors.length - 3;
+            
+            const colorHtml = displayColors.map(c => {
+                const mapColor = { 'Đen': '#000', 'Trắng': '#fff', 'Xanh': '#1e3a8a', 'Xám': '#808080', 'Đỏ': '#dc2626', 'Be': '#f5f5dc', 'Nâu': '#8B4513' };
+                const bg = mapColor[c] || '#ccc';
+                return `<div class="color-swatch" style="background-color: ${bg}" title="${c}"></div>`;
+            }).join('');
+
+            const imgSrc = p.AnhDaiDien || 'https://via.placeholder.com/300x400';
+
+            return `
+                <div class="product-card group cursor-pointer flex-shrink-0 w-full md:w-auto">
+                    <div class="relative w-full aspect-[3/4] overflow-hidden rounded-xl mb-3 bg-gray-200">
+                        <img src="${imgSrc}" class="product-img w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition duration-300 flex justify-center pb-4">
+                            <button class="bg-white text-black text-xs font-bold py-2 px-6 rounded-full shadow-lg hover:bg-black hover:text-white transition">Thêm vào giỏ</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-1 mb-2">
+                        ${colorHtml}
+                        ${extraColors > 0 ? `<span class="text-xs text-gray-500 flex items-center">+${extraColors}</span>` : ''}
+                    </div>
+
+                    <h3 class="text-sm text-gray-700 font-medium mb-1 group-hover:text-blue-600 transition truncate">${p.TenSP}</h3>
+                    
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-bold text-black">${formatCurrency(p.GiaHienThi)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
         async function loadHomeData() {
             const products = await API.get('/products');
             
             const winterContainer = document.getElementById('winter-products');
             const runningContainer = document.getElementById('running-products');
 
+            // Reset container
+            if(winterContainer) winterContainer.innerHTML = '';
+            if(runningContainer) runningContainer.innerHTML = '';
+
             if(Array.isArray(products) && products.length > 0) {
                 // Render vào Section Thu Đông
                 products.forEach(p => {
-                    winterContainer.innerHTML += renderProductCard(p);
+                    if(winterContainer) winterContainer.innerHTML += renderProductCard(p);
                 });
 
-                // Render vào Section Chạy Bộ (Dùng lại data mẫu, thêm class width cố định cho slider)
+                // Render vào Section Chạy Bộ (Slider)
                 products.slice(0, 5).forEach(p => {
-                    // Wrapper width cho slider
                     const cardHtml = renderProductCard(p);
                     const sliderItem = `<div class="w-[280px] snap-start flex-shrink-0">${cardHtml}</div>`;
-                    runningContainer.innerHTML += sliderItem;
+                    if(runningContainer) runningContainer.innerHTML += sliderItem;
                 });
             } else {
-                winterContainer.innerHTML = '<p class="col-span-4 text-center py-10">Đang cập nhật sản phẩm...</p>';
+                if(winterContainer) winterContainer.innerHTML = '<p class="col-span-4 text-center py-10">Chưa có sản phẩm nào. Hãy chạy SQL Script!</p>';
             }
         }
 
         loadHomeData();
     </script>
+
 </body>
 </html>

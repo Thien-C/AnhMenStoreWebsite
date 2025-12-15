@@ -7,7 +7,7 @@ const config = {
     server: process.env.DB_SERVER,
     database: process.env.DB_NAME,
     options: {
-        encrypt: true, // true nếu dùng Azure, false nếu local
+        encrypt: false, // true nếu dùng Azure, false nếu local
         trustServerCertificate: true // Dev local thì để true
     }
 };

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết sản phẩm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .option-btn { border: 1px solid #ddd; padding: 8px 16px; margin-right: 8px; cursor: pointer; border-radius: 4px; }
+        .option-btn.active { border-color: black; background-color: black; color: white; }
+        .option-btn.disabled { opacity: 0.5; cursor: not-allowed; background: #f3f4f6; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <header class="bg-white p-4 shadow-sm mb-6">
+        <div class="container mx-auto">
+            <a href="index.html" class="font-bold text-xl">ANHMEN STORE</a>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-10">
+            
+            <div class="flex flex-col items-center">
+                <img id="main-img" src="https://via.placeholder.com/500" class="w-full max-w-md object-cover rounded-lg shadow-sm">
+            </div>
+
+            <div>
+                <h1 id="p-name" class="text-3xl font-bold mb-2 text-gray-800">Đang tải tên...</h1>
+                <p id="p-price" class="text-2xl font-bold text-blue-600 mb-4">--- ₫</p>
+                <p id="p-desc" class="text-gray-600 mb-6 text-sm leading-relaxed">Đang tải mô tả...</p>
+
+                <div class="mb-4">
+                    <span class="font-bold block mb-2">Màu sắc:</span>
+                    <div id="color-options" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="mb-6">
+                    <span class="font-bold block mb-2">Kích cỡ:</span>
+                    <div id="size-options" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div id="stock-status" class="text-sm mb-4 font-semibold text-green-600"></div>
+
+                <div class="flex gap-4">
+                    <button id="add-to-cart" disabled class="flex-1 bg-gray-300 text-gray-500 font-bold py-3 rounded-lg transition cursor-not-allowed">
+                        Vui lòng chọn biến thể
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/detail.js"></script>
+</body>
+</html>
