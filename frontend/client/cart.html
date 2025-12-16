@@ -28,34 +28,65 @@
     <script src="js/cart.js"></script>
     <script>
         async function loadCart() {
-            const items = await CartManager.getCartDetails();
             const container = document.getElementById('cart-items');
+            container.innerHTML = '<p class="text-gray-500">Đang tải giỏ hàng...</p>';
+            
+            const items = await CartManager.getCartDetails();
             let total = 0;
 
-            if(items.length === 0) {
-                container.innerHTML = '<p>Giỏ hàng trống</p>';
+            if(!items || items.length === 0) {
+                container.innerHTML = '<p class="text-center py-4">Giỏ hàng của bạn đang trống.</p>';
+                document.getElementById('subtotal').innerText = '0đ';
+                document.getElementById('total').innerText = '0đ';
                 return;
             }
 
             container.innerHTML = items.map(item => {
                 total += item.Gia * item.SoLuong;
+                // Nếu login dùng MaChiTietGH, nếu chưa dùng MaBienThe
+                // ... trong hàm map ...
+                const updateId = CartManager.getUser() ? item.MaChiTietGH : item.MaBienThe;
+                const maxStock = item.SoLuongTon || 999;
                 return `
-                    <div class="flex gap-4 border-b pb-4">
-                        <img src="${item.HinhAnh}" class="w-20 h-24 object-cover rounded">
-                        <div class="flex-1">
-                            <h3 class="font-bold">${item.TenSP}</h3>
-                            <p class="text-sm text-gray-500">${item.TenMauSac} / ${item.TenKichCo}</p>
-                            <p class="text-blue-600 font-bold">${new Intl.NumberFormat('vi-VN').format(item.Gia)}đ</p>
-                            <div class="mt-2 text-sm">Số lượng: <b>${item.SoLuong}</b></div>
+                    <div class="flex gap-4 border-b border-gray-100 pb-4 last:border-0 relative group">
+                        <img src="${item.HinhAnh || 'https://via.placeholder.com/100'}" class="w-20 h-24 object-cover rounded-md border">
+                        
+                        <div class="flex-1 flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-sm md:text-base pr-6">${item.TenSP}</h3>
+                                <p class="text-xs text-gray-500 mt-1">Phân loại: ${item.TenMauSac} / ${item.TenKichCo}</p>
+                            </div>
+                            
+                            <div class="flex justify-between items-end mt-2">
+                                <span class="text-blue-600 font-bold">${new Intl.NumberFormat('vi-VN').format(item.Gia)}đ</span>
+                                
+                                <div class="flex items-center border border-gray-300 rounded h-8">
+                                    <button onclick="CartManager.updateQuantity(${updateId}, ${item.SoLuong - 1}, ${maxStock})" 
+                                            class="px-2 hover:bg-gray-100 text-gray-600">-</button>
+                                    
+                                    <input type="number" value="${item.SoLuong}" 
+                                        class="w-12 text-center text-sm focus:outline-none h-full"
+                                        onchange="CartManager.updateQuantity(${updateId}, this.value, ${maxStock})">
+                                    
+                                    <button onclick="CartManager.updateQuantity(${updateId}, ${item.SoLuong + 1}, ${maxStock})" 
+                                            class="px-2 hover:bg-gray-100 text-gray-600">+</button>
+                                </div>
+                            </div>
                         </div>
+
+                        <button onclick="CartManager.removeItem(${updateId})" class="absolute top-0 right-0 text-gray-400 hover:text-red-500 p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
                     </div>
                 `;
+
             }).join('');
 
             const strTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
             document.getElementById('subtotal').innerText = strTotal;
             document.getElementById('total').innerText = strTotal;
         }
+        
         loadCart();
     </script>
 </body>

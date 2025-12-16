@@ -44,7 +44,14 @@
                 </div>
 
                 <div id="stock-status" class="text-sm mb-4 font-semibold text-green-600"></div>
-
+                <div class="mb-6 flex items-center">
+                    <span class="font-bold mr-4">Số lượng:</span>
+                    <div class="flex items-center border border-gray-300 rounded">
+                        <button onclick="adjustDetailQty(-1)" class="px-4 py-2 hover:bg-gray-100 font-bold">-</button>
+                        <input type="number" id="quantity" value="1" min="1" class="w-16 text-center border-x border-gray-300 py-2 focus:outline-none" onchange="validateManualQty()">
+                        <button onclick="adjustDetailQty(1)" class="px-4 py-2 hover:bg-gray-100 font-bold">+</button>
+                    </div>
+                </div>
                 <div class="flex gap-4">
                     <button id="add-to-cart" disabled class="flex-1 bg-gray-300 text-gray-500 font-bold py-3 rounded-lg transition cursor-not-allowed">
                         Vui lòng chọn biến thể

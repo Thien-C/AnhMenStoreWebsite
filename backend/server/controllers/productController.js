@@ -120,3 +120,34 @@ exports.getMasterData = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+// API 4: Lấy chi tiết danh sách biến thể (Dùng cho Giỏ hàng Guest)
+exports.getVariantsByIds = async (req, res) => {
+    try {
+        const { ids } = req.body; // Mảng id: [1, 2, 3]
+        if (!ids || ids.length === 0) return res.json([]);
+
+        const pool = await connectDB();
+        const request = pool.request();
+
+        // Tạo tham số động cho câu query IN (...)
+        const params = ids.map((id, index) => `@id${index}`).join(',');
+        ids.forEach((id, index) => request.input(`id${index}`, sql.Int, id));
+
+        const query = `
+            SELECT 
+                bt.MaBienThe, bt.Gia, bt.HinhAnh, bt.SoLuongTon,
+                sp.TenSP, sp.MaSP,
+                ms.TenMauSac, kc.TenKichCo
+            FROM SanPham_BienThe bt
+            JOIN SanPham sp ON bt.MaSP = sp.MaSP
+            LEFT JOIN MauSac ms ON bt.MaMauSac = ms.MaMauSac
+            LEFT JOIN KichCo kc ON bt.MaKichCo = kc.MaKichCo
+            WHERE bt.MaBienThe IN (${params})
+        `;
+
+        const result = await request.query(query);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

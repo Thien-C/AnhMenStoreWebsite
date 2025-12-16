@@ -154,6 +154,54 @@ function disableBtn(btn) {
     btn.innerText = 'Vui lòng chọn biến thể';
 }
 
+function adjustDetailQty(delta) {
+    if (!currentVariant) {
+        alert('Vui lòng chọn Màu sắc và Kích cỡ trước!');
+        return;
+    }
+    
+    const input = document.getElementById('quantity');
+    let newVal = parseInt(input.value) + delta;
+    
+    // Validate
+    if (newVal < 1) newVal = 1;
+    if (newVal > currentVariant.stock) {
+        alert(`Kho chỉ còn ${currentVariant.stock} sản phẩm!`);
+        newVal = currentVariant.stock;
+    }
+    
+    input.value = newVal;
+}
+// Hàm mới: Kiểm tra khi người dùng tự nhập số
+function validateManualQty() {
+    if (!currentVariant) return; // Chưa chọn biến thể thì chưa check kỹ
+
+    const input = document.getElementById('quantity');
+    let val = parseInt(input.value);
+
+    // Nếu nhập linh tinh hoặc < 1 thì về 1
+    if (isNaN(val) || val < 1) {
+        val = 1;
+    }
+
+    // Nếu nhập quá tồn kho
+    if (val > currentVariant.stock) {
+        alert(`Quá số lượng tồn kho (Max: ${currentVariant.stock})`);
+        val = currentVariant.stock;
+    }
+
+    input.value = val;
+}
+
+// Cập nhật hàm addToCart để dùng giá trị thực tế từ input
 async function addToCart(variantId) {
-    await CartManager.addToCart(variantId, 1);
+    if (!currentVariant) return;
+    const qty = parseInt(document.getElementById('quantity').value) || 1;
+    
+    if (qty > currentVariant.stock) {
+        alert(`Sản phẩm không đủ hàng (chỉ còn ${currentVariant.stock})`);
+        return;
+    }
+    
+    await CartManager.addToCart(variantId, qty);
 }
