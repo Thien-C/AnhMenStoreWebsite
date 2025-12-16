@@ -21,23 +21,24 @@ class CartManager {
 
         if (user) {
             try {
-                // Nếu login: Đếm từ DB (API trả về mảng items)
+                // Nếu login: Gọi API lấy danh sách và đếm số phần tử
                 const cartItems = await API.get('/cart');
                 if (Array.isArray(cartItems)) {
-                    count = cartItems.reduce((sum, item) => sum + item.SoLuong, 0);
+                    // SỬA: Lấy độ dài mảng (số loại SP) thay vì cộng dồn số lượng
+                    count = cartItems.length; 
                 }
             } catch (e) { console.error(e); }
         } else {
             // Nếu guest: Đếm từ LocalStorage
             const localItems = this.getLocalCart();
-            count = localItems.reduce((sum, item) => sum + item.soLuong, 0);
+            // SỬA: Lấy độ dài mảng (số loại SP) thay vì cộng dồn số lượng
+            count = localItems.length;
         }
 
         badge.innerText = count;
-        // Ẩn hiện badge
+        // Ẩn hiện badge (Chỉ hiện khi > 0)
         badge.style.display = count > 0 ? 'block' : 'none';
     }
-
     // --- THÊM VÀO GIỎ ---
     static async addToCart(variantId, quantity) {
         const user = this.getUser();
