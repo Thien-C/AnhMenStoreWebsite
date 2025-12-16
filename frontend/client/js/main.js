@@ -75,27 +75,67 @@ function handleSearchRedirect() {
 async function loadSearchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const keyword = urlParams.get('keyword');
+    const categoryId = urlParams.get('category'); // Lấy ID từ URL
+    
     const displayEl = document.getElementById('search-keyword-display');
     const container = document.getElementById('search-results-container');
     const searchInput = document.getElementById('searchInput');
 
-    if (!keyword) { if(displayEl) displayEl.innerText = "Bạn chưa nhập từ khóa tìm kiếm."; return; }
-    if (searchInput) searchInput.value = keyword;
-    if (displayEl) displayEl.innerHTML = `Từ khóa: <span class="font-bold text-black">"${keyword}"</span>`;
+    // === PHẦN 1: XỬ LÝ HIỂN THỊ TIÊU ĐỀ ===
+    if (displayEl) {
+        if (keyword) {
+            displayEl.innerHTML = `Kết quả tìm kiếm cho: <span class="font-bold">"${keyword}"</span>`;
+            if (searchInput) searchInput.value = keyword;
+        } else if (categoryId) {
+            // [MỚI] Gọi API lấy Master Data để tìm tên danh mục từ ID
+            displayEl.innerHTML = `Đang tải tên danh mục...`; // Hiện text tạm
+            
+            try {
+                const data = await API.get('/products/master-data');
+                // Tìm danh mục có ID trùng với categoryId trên URL
+                const cat = data.categories.find(c => c.MaDanhMuc == categoryId);
+                
+                if (cat) {
+                    displayEl.innerHTML = `Đang xem danh mục: <span class="font-bold text-blue-600 text-xl">"${cat.TenDanhMuc}"</span>`;
+                } else {
+                    displayEl.innerHTML = `Đang xem danh mục ID: <span class="font-bold">"${categoryId}"</span>`;
+                }
+            } catch (err) {
+                console.error("Lỗi lấy tên danh mục:", err);
+                // Fallback nếu lỗi API
+                displayEl.innerHTML = `Đang xem danh mục ID: <span class="font-bold">"${categoryId}"</span>`;
+            }
+
+        } else {
+            displayEl.innerHTML = `Tất cả sản phẩm`;
+        }
+    }
     
+    // === PHẦN 2: TẢI SẢN PHẨM (GIỮ NGUYÊN) ===
     try {
-        const products = await API.get(`/products?keyword=${keyword}`);
+        let apiUrl = '/products';
+        const params = [];
+        if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
+        if (categoryId) params.push(`category=${categoryId}`);
+        
+        if (params.length > 0) apiUrl += '?' + params.join('&');
+
+        const products = await API.get(apiUrl);
+        
         if (container) {
             container.innerHTML = ''; 
             if (Array.isArray(products) && products.length > 0) {
                 products.forEach(p => container.innerHTML += renderProductCard(p));
             } else {
-                container.innerHTML = `<div class="col-span-full text-center py-10"><p class="text-xl text-gray-500 mb-4">Không tìm thấy sản phẩm nào.</p><a href="index.html" class="text-blue-600 font-bold hover:underline">Về trang chủ</a></div>`;
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-10">
+                        <p class="text-xl text-gray-500 mb-4">Không tìm thấy sản phẩm nào.</p>
+                        <a href="index.html" class="text-blue-600 font-bold hover:underline">Xem tất cả sản phẩm</a>
+                    </div>`;
             }
         }
     } catch (error) { console.error(error); }
 }
-
 // === PHẦN 3: LOGIC AUTH (ĐĂNG NHẬP / ĐĂNG KÝ / MODAL) - MỚI ===
 const AuthManager = {
     modal: null,
@@ -227,13 +267,79 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSearch.addEventListener('click', handleSearchRedirect);
         searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearchRedirect(); });
     }
-
+    
     // Init Auth
     AuthManager.init();
-
+    loadMenu();
     // Update Cart Badge
     if (typeof CartManager !== 'undefined') CartManager.updateBadge();
 });
 
 // Expose AuthManager global để gọi từ HTML nếu cần (ví dụ onclick chuyển form)
 window.AuthManager = AuthManager;
+
+// === PHẦN: RENDER MENU ĐỘNG ===
+async function loadMenu() {
+    const navContainer = document.getElementById('main-nav');
+    if (!navContainer) return;
+
+    try {
+        // 1. Lấy dữ liệu Master Data (Chứa danh mục)
+        const data = await API.get('/products/master-data');
+        const categories = data.categories; // Mảng danh mục từ DB
+
+        if (!categories || categories.length === 0) return;
+
+        // 2. Tạo nút "Sản Phẩm" (Hiện tất cả)
+        let html = `
+            <a href="search.html" class="hover:text-blue-600 transition h-full flex items-center">
+                Sản phẩm
+            </a>
+        `;
+
+        // 3. Lọc lấy các Danh mục CHA (MaDanhMucCha = null)
+        const parents = categories.filter(c => !c.MaDanhMucCha);
+
+        parents.forEach(parent => {
+            // Tìm các con của danh mục này
+            const children = categories.filter(c => c.MaDanhMucCha === parent.MaDanhMuc);
+
+            if (children.length > 0) {
+                // === MENU CÓ CẤP 2 (Dropdown) ===
+                const childHtml = children.map(child => `
+                    <a href="search.html?category=${child.MaDanhMuc}" 
+                       class="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600 text-sm font-medium whitespace-nowrap border-b border-gray-100 last:border-0 transition-colors">
+                       ${child.TenDanhMuc}
+                    </a>
+                `).join('');
+
+                html += `
+                    <div class="group relative h-full flex items-center cursor-pointer">
+                        <a href="search.html?category=${parent.MaDanhMuc}" class="hover:text-blue-600 transition flex items-center gap-1">
+                            ${parent.TenDanhMuc}
+                            <svg class="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </a>
+                        
+                        <div class="absolute top-full left-0 bg-white shadow-xl border-t-2 border-blue-600 min-w-[180px] 
+                                    opacity-0 invisible translate-y-2 transition-all duration-300 z-50 rounded-b-lg
+                                    group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
+                            ${childHtml}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // === MENU KHÔNG CÓ CON (Link thường) ===
+                html += `
+                    <a href="search.html?category=${parent.MaDanhMuc}" class="hover:text-blue-600 transition h-full flex items-center">
+                        ${parent.TenDanhMuc}
+                    </a>
+                `;
+            }
+        });
+
+        navContainer.innerHTML = html;
+
+    } catch (err) {
+        console.error("Lỗi tải menu:", err);
+    }
+}
