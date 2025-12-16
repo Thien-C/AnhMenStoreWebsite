@@ -24,8 +24,8 @@
         </div>
     </div>
 
-    <script src="js/api.js"></script>
-    <script src="js/cart.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/cart.js"></script>
     <script>
         async function loadCart() {
             const container = document.getElementById('cart-items');
@@ -43,13 +43,19 @@
 
             container.innerHTML = items.map(item => {
                 total += item.Gia * item.SoLuong;
-                // Nếu login dùng MaChiTietGH, nếu chưa dùng MaBienThe
-                // ... trong hàm map ...
                 const updateId = CartManager.getUser() ? item.MaChiTietGH : item.MaBienThe;
                 const maxStock = item.SoLuongTon || 999;
+                
+                // LƯU Ý: Nếu ảnh item.HinhAnh không bắt đầu bằng http, thêm ../ vào đây
+                // Ví dụ: item.HinhAnh = "asset/ao-xanh.jpg" -> "../asset/ao-xanh.jpg"
+                let imgSrc = item.HinhAnh || 'https://via.placeholder.com/100';
+                if (!imgSrc.startsWith('http') && !imgSrc.startsWith('../')) {
+                    imgSrc = '../' + imgSrc;
+                }
+
                 return `
                     <div class="flex gap-4 border-b border-gray-100 pb-4 last:border-0 relative group">
-                        <img src="${item.HinhAnh || 'https://via.placeholder.com/100'}" class="w-20 h-24 object-cover rounded-md border">
+                        <img src="${imgSrc}" class="w-20 h-24 object-cover rounded-md border">
                         
                         <div class="flex-1 flex flex-col justify-between">
                             <div>
