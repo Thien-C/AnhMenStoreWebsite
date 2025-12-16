@@ -39,15 +39,28 @@
 
         document.getElementById('checkout-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // 1. Lấy danh sách ID đã chọn từ cart.js
+            const selectedItems = JSON.parse(localStorage.getItem('checkout_items'));
+            
+            if (!selectedItems || selectedItems.length === 0) {
+                alert("Không có sản phẩm nào được chọn để thanh toán!");
+                window.location.href = 'cart.html';
+                return;
+            }
+
             const data = {
                 hoTen: document.getElementById('name').value,
                 soDienThoai: document.getElementById('phone').value,
                 diaChi: document.getElementById('address').value,
-                phuongThucTT: document.getElementById('method').value
+                phuongThucTT: document.getElementById('method').value,
+                listItems: selectedItems // <--- GỬI KÈM DANH SÁCH ID
             };
 
             const res = await API.post('/orders', data);
             if (res.orderId) {
+                // Xóa danh sách tạm sau khi mua xong
+                localStorage.removeItem('checkout_items');
                 alert('Đặt hàng thành công! Mã đơn: ' + res.orderId);
                 window.location.href = 'index.html';
             } else {

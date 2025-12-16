@@ -11,89 +11,81 @@ class CartManager {
         localStorage.setItem('cart_items', JSON.stringify(items));
     }
 
-    // Cập nhật số lượng trên icon giỏ hàng
     static async updateBadge() {
         const badge = document.getElementById('cart-count');
         if (!badge) return;
-
         const user = this.getUser();
         let count = 0;
-
         if (user) {
             try {
                 const cartItems = await API.get('/cart');
-                if (Array.isArray(cartItems)) count = cartItems.length; 
+                if (Array.isArray(cartItems)) count = cartItems.length;
             } catch (e) { console.error(e); }
         } else {
-            const localItems = this.getLocalCart();
-            count = localItems.length;
+            count = this.getLocalCart().length;
         }
-
         badge.innerText = count;
         badge.style.display = count > 0 ? 'block' : 'none';
     }
 
     static async addToCart(variantId, quantity) {
         const user = this.getUser();
-        
         if (user) {
             const res = await API.post('/cart/add', { maBienThe: variantId, soLuong: quantity });
             alert(res.message || 'Đã thêm vào giỏ hàng');
         } else {
             let items = this.getLocalCart();
             const existItem = items.find(i => i.maBienThe === variantId);
-            if (existItem) {
-                existItem.soLuong += quantity;
-            } else {
-                items.push({ maBienThe: variantId, soLuong: quantity });
-            }
+            if (existItem) { existItem.soLuong += quantity; } 
+            else { items.push({ maBienThe: variantId, soLuong: quantity }); }
             this.setLocalCart(items);
             alert('Đã thêm vào giỏ hàng (Máy cục bộ)');
         }
         this.updateBadge();
     }
-    
+
+    // --- SỬA LỖI QUAN TRỌNG: Kiểm tra dữ liệu kỹ càng trước khi trả về ---
     static async getCartDetails() {
         const user = this.getUser();
         if (user) {
-            const res = await API.get('/cart');
-            return Array.isArray(res) ? res : [];
+            try {
+                const res = await API.get('/cart');
+                return Array.isArray(res) ? res : [];
+            } catch (e) { return []; }
         } else {
             const localItems = this.getLocalCart();
             if (localItems.length === 0) return [];
+            
             const ids = localItems.map(i => i.maBienThe);
-            const variants = await API.post('/products/variants', { ids });
+            try {
+                const variants = await API.post('/products/variants', { ids });
+                // Nếu API lỗi trả về object {message: ...}, variants sẽ không phải mảng -> Crash
+                if (!Array.isArray(variants)) return [];
 
-            return variants.map(v => {
-                const item = localItems.find(i => i.maBienThe === v.MaBienThe);
-                return {
-                    ...v,
-                    SoLuong: item ? item.soLuong : 0,
-                    MaChiTietGH: v.MaBienThe 
-                };
-            });
+                return variants.map(v => {
+                    const item = localItems.find(i => i.maBienThe === v.MaBienThe);
+                    return {
+                        ...v,
+                        SoLuong: item ? item.soLuong : 0,
+                        MaChiTietGH: v.MaBienThe 
+                    };
+                });
+            } catch (e) { return []; }
         }
     }
 
     static async removeItem(id) {
+        if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
         const user = this.getUser();
-        if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-            if (user) {
-                await API.delete(`/cart/${id}`);
-            } else {
-                let items = this.getLocalCart();
-                items = items.filter(i => i.maBienThe != id);
-                this.setLocalCart(items);
-            }
-            // Reload lại để cập nhật giao diện
-            // Nếu đang ở trang cart thì gọi render lại, nếu không thì reload trang
-            if (document.getElementById('cart-items')) {
-                this.renderCartPage(); 
-                this.updateBadge();
-            } else {
-                window.location.reload();
-            }
+        if (user) {
+            await API.delete(`/cart/${id}`);
+        } else {
+            let items = this.getLocalCart();
+            items = items.filter(i => i.maBienThe != id);
+            this.setLocalCart(items);
         }
+        this.renderCartPage();
+        this.updateBadge();
     }
 
     static async updateQuantity(id, newQty, maxStock) {
@@ -115,44 +107,39 @@ class CartManager {
                 this.setLocalCart(items);
             }
         }
-        
-        // Reload nhẹ thay vì reload trang
-        if (document.getElementById('cart-items')) {
-            this.renderCartPage();
-        } else {
-            window.location.reload();
-        }
+        this.renderCartPage();
     }
 
-    // === MỚI: HÀM RENDER TRANG GIỎ HÀNG (ĐỂ FILE HTML GỌN HƠN) ===
+    // --- HÀM RENDER CHÍNH (Thay thế loadCart cũ) ---
     static async renderCartPage() {
         const container = document.getElementById('cart-items');
-        if(!container) return; // Không phải trang cart
+        if(!container) return; // Không phải trang cart thì thoát
 
         container.innerHTML = '<p class="text-gray-500">Đang tải giỏ hàng...</p>';
         const items = await this.getCartDetails();
-        let total = 0;
 
         if(!items || items.length === 0) {
             container.innerHTML = '<p class="text-center py-4">Giỏ hàng của bạn đang trống.</p>';
-            document.getElementById('subtotal').innerText = '0đ';
-            document.getElementById('total').innerText = '0đ';
+            if(document.getElementById('subtotal')) document.getElementById('subtotal').innerText = '0đ';
+            if(document.getElementById('total')) document.getElementById('total').innerText = '0đ';
             return;
         }
 
         container.innerHTML = items.map(item => {
-            total += item.Gia * item.SoLuong;
             const updateId = this.getUser() ? item.MaChiTietGH : item.MaBienThe;
             const maxStock = item.SoLuongTon || 999;
-            
-            // Fix ảnh: Nếu không phải http và không bắt đầu ../ thì thêm vào
             let imgSrc = item.HinhAnh || 'https://via.placeholder.com/100';
-            if (!imgSrc.startsWith('http') && !imgSrc.startsWith('../')) {
-                imgSrc = '../' + imgSrc;
-            }
+            if (!imgSrc.startsWith('http') && !imgSrc.startsWith('../')) imgSrc = '../' + imgSrc;
 
             return `
-                <div class="flex gap-4 border-b border-gray-100 pb-4 last:border-0 relative group">
+                <div class="flex gap-4 border-b border-gray-100 pb-4 last:border-0 relative group items-center">
+                    <input type="checkbox" 
+                           class="cart-checkbox w-5 h-5 accent-black cursor-pointer mr-2" 
+                           value="${item.MaBienThe}"
+                           data-price="${item.Gia}"
+                           data-qty="${item.SoLuong}"
+                           onchange="updateSelectedTotal()" checked>
+
                     <img src="${imgSrc}" class="w-20 h-24 object-cover rounded-md border">
                     
                     <div class="flex-1 flex flex-col justify-between">
@@ -169,8 +156,7 @@ class CartManager {
                                         class="px-2 hover:bg-gray-100 text-gray-600">-</button>
                                 
                                 <input type="number" value="${item.SoLuong}" 
-                                    class="w-12 text-center text-sm focus:outline-none h-full"
-                                    onchange="CartManager.updateQuantity(${updateId}, this.value, ${maxStock})">
+                                    class="w-12 text-center text-sm focus:outline-none h-full" readonly>
                                 
                                 <button onclick="CartManager.updateQuantity(${updateId}, ${item.SoLuong + 1}, ${maxStock})" 
                                         class="px-2 hover:bg-gray-100 text-gray-600">+</button>
@@ -185,13 +171,40 @@ class CartManager {
             `;
         }).join('');
 
-        const strTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
-        if(document.getElementById('subtotal')) document.getElementById('subtotal').innerText = strTotal;
-        if(document.getElementById('total')) document.getElementById('total').innerText = strTotal;
+        // Gọi tính tổng lần đầu
+        updateSelectedTotal();
     }
 }
 
-// Tự động chạy render nếu đang ở trang cart
+// --- CÁC HÀM BỔ TRỢ (Nằm ngoài class) ---
+function updateSelectedTotal() {
+    const checkboxes = document.querySelectorAll('.cart-checkbox:checked');
+    let total = 0;
+    checkboxes.forEach(box => {
+        const price = parseFloat(box.dataset.price);
+        const qty = parseInt(box.dataset.qty);
+        total += price * qty;
+    });
+    const strTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+    if(document.getElementById('subtotal')) document.getElementById('subtotal').innerText = strTotal;
+    if(document.getElementById('total')) document.getElementById('total').innerText = strTotal;
+}
+
+function proceedToCheckout() {
+    const checkboxes = document.querySelectorAll('.cart-checkbox:checked');
+    if (checkboxes.length === 0) {
+        alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán!");
+        return;
+    }
+    const selectedItems = [];
+    checkboxes.forEach(box => selectedItems.push(parseInt(box.value)));
+    
+    // Lưu danh sách item đã chọn để trang Checkout dùng
+    localStorage.setItem('checkout_items', JSON.stringify(selectedItems));
+    window.location.href = 'checkout.html';
+}
+
+// Tự động chạy khi load trang
 document.addEventListener('DOMContentLoaded', () => {
     if(window.location.pathname.includes('cart.html')) {
         CartManager.renderCartPage();

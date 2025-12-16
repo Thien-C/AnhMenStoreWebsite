@@ -1,30 +1,50 @@
+// backend/server/controllers/orderController.js
 const { connectDB, sql } = require('../config/dbConfig');
 
 exports.createOrder = async (req, res) => {
-    const { hoTen, diaChi, soDienThoai, phuongThucTT } = req.body;
+    // 1. Nhận listItems từ req.body
+    const { hoTen, diaChi, soDienThoai, phuongThucTT, listItems } = req.body;
     const userId = req.user.id;
     const pool = await connectDB();
     const transaction = new sql.Transaction(pool);
 
     try {
-        await transaction.begin(); // Bắt đầu giao dịch
+        await transaction.begin(); 
 
-        // 1. Lấy dữ liệu từ Giỏ hàng (Tính tiền tại server để bảo mật)
-        const cartReq = new sql.Request(transaction);
-        cartReq.input('UserId', sql.Int, userId);
-        const cartItems = await cartReq.query(`
+        // Kiểm tra nếu không có listItems hoặc mảng rỗng
+        if (!listItems || !Array.isArray(listItems) || listItems.length === 0) {
+            throw new Error('Không có sản phẩm nào được chọn!');
+        }
+
+        // --- XỬ LÝ SQL ĐỘNG CHO MỆNH ĐỀ IN (...) ---
+        // Tạo danh sách tham số: @id0, @id1, @id2...
+        const request = new sql.Request(transaction);
+        const params = listItems.map((id, index) => `@id${index}`).join(',');
+
+        // Gán giá trị cho từng tham số
+        request.input('UserId', sql.Int, userId);
+        listItems.forEach((id, index) => {
+            request.input(`id${index}`, sql.Int, id);
+        });
+
+        // 2. Query Lấy dữ liệu (CHỈ NHỮNG MÓN ĐƯỢC CHỌN)
+        // Thêm điều kiện: AND ct.MaBienThe IN (...)
+        const cartQuery = `
             SELECT ct.MaBienThe, ct.SoLuong, bt.Gia 
             FROM ChiTietGioHang ct
             JOIN GioHang gh ON ct.MaGioHang = gh.MaGioHang
             JOIN SanPham_BienThe bt ON ct.MaBienThe = bt.MaBienThe
-            WHERE gh.MaNguoiDung = @UserId
-        `);
+            WHERE gh.MaNguoiDung = @UserId 
+            AND ct.MaBienThe IN (${params})  
+        `;
+        
+        const cartItems = await request.query(cartQuery);
 
-        if (cartItems.recordset.length === 0) throw new Error('Giỏ hàng trống!');
+        if (cartItems.recordset.length === 0) throw new Error('Giỏ hàng trống hoặc sản phẩm chọn không hợp lệ!');
 
         const totalAmount = cartItems.recordset.reduce((sum, item) => sum + (item.SoLuong * item.Gia), 0);
 
-        // 2. Insert DonHang
+        // 3. Insert DonHang (Không đổi)
         const orderReq = new sql.Request(transaction);
         orderReq.input('UserId', sql.Int, userId)
                 .input('Name', sql.NVarChar, hoTen)
@@ -40,9 +60,8 @@ exports.createOrder = async (req, res) => {
         `);
         const newOrderId = orderRes.recordset[0].MaDonHang;
 
-        // 3. Insert ChiTietDonHang & Trừ Tồn Kho
+        // 4. Insert ChiTietDonHang & Trừ Tồn Kho (Vòng lặp không đổi)
         for (const item of cartItems.recordset) {
-            // Trừ tồn kho (Quan trọng: Kiểm tra >= Qty)
             const stockReq = new sql.Request(transaction);
             stockReq.input('Id', sql.Int, item.MaBienThe).input('Qty', sql.Int, item.SoLuong);
             
@@ -55,7 +74,6 @@ exports.createOrder = async (req, res) => {
                 throw new Error(`Sản phẩm (ID: ${item.MaBienThe}) không đủ hàng!`);
             }
 
-            // Insert Chi tiết
             const detailReq = new sql.Request(transaction);
             detailReq.input('OrderId', sql.Int, newOrderId)
                      .input('VariantId', sql.Int, item.MaBienThe)
@@ -64,16 +82,30 @@ exports.createOrder = async (req, res) => {
             await detailReq.query(`INSERT INTO ChiTietDonHang (MaDonHang, MaBienThe, SoLuong, DonGia) VALUES (@OrderId, @VariantId, @Qty, @Price)`);
         }
 
-        // 4. Xóa Giỏ hàng
+        // 5. Xóa các sản phẩm ĐÃ MUA khỏi Giỏ hàng (QUAN TRỌNG: Chỉ xóa món đã chọn)
+        // Phải tạo lại request mới để xóa vì request cũ đã execute
         const clearReq = new sql.Request(transaction);
         clearReq.input('UserId', sql.Int, userId);
-        await clearReq.query(`DELETE ct FROM ChiTietGioHang ct JOIN GioHang gh ON ct.MaGioHang = gh.MaGioHang WHERE gh.MaNguoiDung = @UserId`);
+        
+        // Gán lại tham số id cho query xóa
+        listItems.forEach((id, index) => {
+            clearReq.input(`id${index}`, sql.Int, id);
+        });
 
-        await transaction.commit(); // Thành công -> Lưu DB
+        // Query DELETE chỉ xóa sản phẩm nằm trong IN (...)
+        await clearReq.query(`
+            DELETE ct 
+            FROM ChiTietGioHang ct 
+            JOIN GioHang gh ON ct.MaGioHang = gh.MaGioHang 
+            WHERE gh.MaNguoiDung = @UserId 
+            AND ct.MaBienThe IN (${params})
+        `);
+
+        await transaction.commit();
         res.json({ message: 'Đặt hàng thành công!', orderId: newOrderId });
 
     } catch (err) {
-        await transaction.rollback(); // Lỗi -> Hoàn tác tất cả
+        if(transaction) await transaction.rollback();
         res.status(500).json({ message: err.message });
     }
 };
