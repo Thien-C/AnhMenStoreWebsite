@@ -22,11 +22,12 @@ function renderProductCard(p) {
             <a href="product-detail.html?id=${p.MaSP}" class="block relative w-full aspect-[3/4] overflow-hidden rounded-xl mb-3 bg-gray-200">
                 <img src="${imgSrc}" class="product-img w-full h-full object-cover">
                 <div class="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition duration-300 flex justify-center pb-4">
-                    <button onclick="event.preventDefault(); addQuickToCart(${p.MaBienThe})" 
+                    
+                    <button onclick="event.preventDefault(); window.location.href='product-detail.html?id=${p.MaSP}'" 
                             class="bg-white text-black text-xs font-bold py-2 px-6 rounded-full shadow-lg hover:bg-black hover:text-white transition">
                         Thêm vào giỏ
                     </button>
-                </div>
+                    </div>
             </a>
             <a href="product-detail.html?id=${p.MaSP}">
                 <div class="flex gap-1 mb-2">${colorHtml}</div>
@@ -127,17 +128,24 @@ const AuthManager = {
         
         if (authBtn) {
             if (user) {
+                // ĐÃ ĐĂNG NHẬP: Hiện tên User + Click vào thì sang trang Profile
                 authBtn.innerHTML = `<div class="flex items-center gap-1"><span class="text-xs font-bold truncate max-w-[80px]">${user.name}</span></div>`;
-                // Gán sự kiện Logout
+                
+                // --- SỬA ĐOẠN NÀY ---
                 authBtn.onclick = (e) => {
-                    e.preventDefault(); // Ngăn chặn hành vi mặc định nếu có
-                    if (confirm('Đăng xuất?')) {
-                        localStorage.clear();
-                        window.location.reload();
-                    }
+                    e.preventDefault(); 
+                    // Chuyển hướng sang trang Profile thay vì logout ngay
+                    window.location.href = 'profile.html';
                 };
+                // --------------------
+
             } else {
-                // Gán sự kiện mở Modal Login
+                // CHƯA ĐĂNG NHẬP: Giữ nguyên logic mở Modal
+                authBtn.innerHTML = `
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                `;
                 authBtn.onclick = (e) => {
                     e.preventDefault();
                     this.toggleModal(true);

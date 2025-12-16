@@ -239,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     CartManager.updateBadge();
 });
 // === LOGIC CHECKOUT ===
+// === LOGIC CHECKOUT ===
 async function initCheckoutPage() {
     // 1. Kiểm tra đăng nhập
     const user = CartManager.getUser();
@@ -248,7 +249,7 @@ async function initCheckoutPage() {
         return;
     }
 
-    // 2. Kiểm tra có sản phẩm để thanh toán không
+    // 2. Kiểm tra giỏ hàng
     const selectedItems = JSON.parse(localStorage.getItem('checkout_items'));
     if (!selectedItems || selectedItems.length === 0) {
         alert("Chưa chọn sản phẩm nào!");
@@ -256,13 +257,66 @@ async function initCheckoutPage() {
         return;
     }
 
-    // 3. Auto fill thông tin User
-    if (user) {
-        if(document.getElementById('name')) document.getElementById('name').value = user.name || '';
-        // Có thể fill thêm phone/address nếu user có lưu
+    // 3. Tải thông tin Profile & Địa chỉ
+    try {
+        const profile = await API.get('/user/profile');
+        
+        // Nếu user có địa chỉ đã lưu -> Hiển thị dropdown
+        if (profile && profile.addresses && profile.addresses.length > 0) {
+            const selectorGroup = document.getElementById('address-selector-group');
+            const selectEl = document.getElementById('saved-addresses');
+            
+            if (selectorGroup && selectEl) {
+                selectorGroup.classList.remove('hidden');
+
+                // Render options
+                profile.addresses.forEach(addr => {
+                    const opt = document.createElement('option');
+                    opt.value = addr.MaDiaChi;
+                    // Lưu dữ liệu vào dataset để tiện lấy ra khi change
+                    opt.dataset.name = addr.HoTenNguoiNhan;
+                    opt.dataset.phone = addr.SoDienThoai;
+                    opt.dataset.address = addr.DiaChiChiTiet;
+                    
+                    // Text hiển thị
+                    const defaultLabel = addr.LaMacDinh ? ' (Mặc định)' : '';
+                    opt.innerText = `${addr.DiaChiChiTiet} - ${addr.HoTenNguoiNhan}${defaultLabel}`;
+                    
+                    selectEl.appendChild(opt);
+
+                    // Nếu là mặc định -> Chọn luôn & Điền form
+                    if (addr.LaMacDinh) {
+                        selectEl.value = addr.MaDiaChi;
+                        fillCheckoutForm(addr.HoTenNguoiNhan, addr.SoDienThoai, addr.DiaChiChiTiet);
+                    }
+                });
+
+                // Bắt sự kiện thay đổi lựa chọn
+                selectEl.addEventListener('change', (e) => {
+                    const val = e.target.value;
+                    if (val === 'new') {
+                        // Nếu chọn nhập mới -> Reset form
+                        fillCheckoutForm(user.name || '', '', ''); 
+                    } else {
+                        // Nếu chọn địa chỉ có sẵn -> Lấy data từ option đã chọn
+                        const selectedOpt = selectEl.options[selectEl.selectedIndex];
+                        fillCheckoutForm(
+                            selectedOpt.dataset.name,
+                            selectedOpt.dataset.phone,
+                            selectedOpt.dataset.address
+                        );
+                    }
+                });
+            }
+        } else {
+            // Nếu chưa có địa chỉ nào -> Fill tên mặc định của user
+            if(document.getElementById('name')) document.getElementById('name').value = user.name || '';
+        }
+    } catch (err) {
+        console.error("Lỗi tải profile:", err);
     }
 
-    // 4. Xử lý Submit Form
+    // 4. Xử lý Submit Form (Đặt hàng)
     const form = document.getElementById('checkout-form');
     if (form) {
         form.addEventListener('submit', async (e) => {
@@ -273,12 +327,12 @@ async function initCheckoutPage() {
                 soDienThoai: document.getElementById('phone').value,
                 diaChi: document.getElementById('address').value,
                 phuongThucTT: document.getElementById('method').value,
-                listItems: selectedItems // Gửi kèm danh sách ID
+                listItems: selectedItems
             };
 
             const res = await API.post('/orders', data);
             if (res.orderId) {
-                localStorage.removeItem('checkout_items'); // Clear danh sách tạm
+                localStorage.removeItem('checkout_items');
                 alert('Đặt hàng thành công! Mã đơn: ' + res.orderId);
                 window.location.href = 'index.html';
             } else {
@@ -286,6 +340,13 @@ async function initCheckoutPage() {
             }
         });
     }
+}
+
+// Helper: Hàm điền form nhanh
+function fillCheckoutForm(name, phone, address) {
+    if(document.getElementById('name')) document.getElementById('name').value = name || '';
+    if(document.getElementById('phone')) document.getElementById('phone').value = phone || '';
+    if(document.getElementById('address')) document.getElementById('address').value = address || '';
 }
 
 // Thêm vào Event Listener chung của cart.js
