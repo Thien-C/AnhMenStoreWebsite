@@ -1,18 +1,15 @@
-// Hàm tiện ích: Tự động sửa đường dẫn ảnh nếu cần
+// frontend/client/js/main.js
+
+// === PHẦN 1: TIỆN ÍCH & LOGIC SẢN PHẨM (GIỮ NGUYÊN) ===
 function fixImgPath(path) {
     if (!path) return 'https://via.placeholder.com/300x400';
     if (path.startsWith('http') || path.startsWith('../')) return path;
-    return '../' + path; // Thêm ../ để lùi ra khỏi thư mục pages/
+    return '../' + path; 
 }
 
-// 1. Hàm render HTML cho 1 thẻ sản phẩm
 function renderProductCard(p) {
-    // Giá tiền
     const price = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.GiaHienThi || 0);
-    // Ảnh đại diện (đã fix path)
     const imgSrc = fixImgPath(p.AnhDaiDien);
-    
-    // Xử lý màu sắc
     let colors = p.DS_Mau ? p.DS_Mau.split(',') : ['Mặc định'];
     const colorHtml = colors.slice(0, 3).map(c => {
         const mapColor = { 'Đen': '#000', 'Trắng': '#fff', 'Xanh': '#1e3a8a', 'Xám': '#808080', 'Đỏ': '#dc2626', 'Be': '#f5f5dc', 'Nâu': '#8B4513' };
@@ -24,7 +21,6 @@ function renderProductCard(p) {
         <div class="product-card group w-full md:w-auto block relative">
             <a href="product-detail.html?id=${p.MaSP}" class="block relative w-full aspect-[3/4] overflow-hidden rounded-xl mb-3 bg-gray-200">
                 <img src="${imgSrc}" class="product-img w-full h-full object-cover">
-                
                 <div class="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition duration-300 flex justify-center pb-4">
                     <button onclick="event.preventDefault(); addQuickToCart(${p.MaBienThe})" 
                             class="bg-white text-black text-xs font-bold py-2 px-6 rounded-full shadow-lg hover:bg-black hover:text-white transition">
@@ -32,7 +28,6 @@ function renderProductCard(p) {
                     </button>
                 </div>
             </a>
-            
             <a href="product-detail.html?id=${p.MaSP}">
                 <div class="flex gap-1 mb-2">${colorHtml}</div>
                 <h3 class="text-sm text-gray-700 font-medium mb-1 group-hover:text-blue-600 truncate">${p.TenSP}</h3>
@@ -44,21 +39,13 @@ function renderProductCard(p) {
     `;
 }
 
-// Hàm thêm nhanh vào giỏ (yêu cầu cart.js đã load)
 async function addQuickToCart(variantId) {
-    if(!variantId) {
-        alert("Sản phẩm này chưa có biến thể để mua ngay!");
-        return;
-    }
-    if(typeof CartManager !== 'undefined') {
-        await CartManager.addToCart(variantId, 1);
-    }
+    if(!variantId) { alert("Sản phẩm này chưa có biến thể để mua ngay!"); return; }
+    if(typeof CartManager !== 'undefined') await CartManager.addToCart(variantId, 1);
 }
 
-// ================= LOGIC TRANG CHỦ =================
 async function loadHomeData() {
     const products = await API.get('/products');
-    
     const winterContainer = document.getElementById('winter-products');
     const runningContainer = document.getElementById('running-products');
 
@@ -68,33 +55,22 @@ async function loadHomeData() {
     if(Array.isArray(products) && products.length > 0) {
         products.forEach((p, index) => {
             const html = renderProductCard(p);
-            // 5 sản phẩm đầu vào slider chạy bộ
-            if (index < 5 && runningContainer) {
-                runningContainer.innerHTML += `<div class="w-[280px] snap-start flex-shrink-0">${html}</div>`;
-            } 
-            // Tất cả vào grid chính
-            if (winterContainer) {
-                winterContainer.innerHTML += html;
-            }
+            if (index < 5 && runningContainer) runningContainer.innerHTML += `<div class="w-[280px] snap-start flex-shrink-0">${html}</div>`;
+            if (winterContainer) winterContainer.innerHTML += html;
         });
     } else {
         if(winterContainer) winterContainer.innerHTML = '<p class="col-span-4 text-center py-10">Chưa có sản phẩm nào.</p>';
     }
 }
 
-// ================= LOGIC TÌM KIẾM =================
-// 1. Chuyển hướng khi ấn tìm kiếm
+// === PHẦN 2: LOGIC TÌM KIẾM ===
 function handleSearchRedirect() {
     const input = document.getElementById('searchInput');
     const keyword = input.value.trim();
-    if (!keyword) {
-        alert("Vui lòng nhập từ khóa!");
-        return;
-    }
+    if (!keyword) { alert("Vui lòng nhập từ khóa!"); return; }
     window.location.href = `search.html?keyword=${encodeURIComponent(keyword)}`;
 }
 
-// 2. Load dữ liệu tại trang search.html
 async function loadSearchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const keyword = urlParams.get('keyword');
@@ -102,15 +78,10 @@ async function loadSearchPage() {
     const container = document.getElementById('search-results-container');
     const searchInput = document.getElementById('searchInput');
 
-    if (!keyword) {
-        if(displayEl) displayEl.innerText = "Bạn chưa nhập từ khóa tìm kiếm.";
-        return;
-    }
-
+    if (!keyword) { if(displayEl) displayEl.innerText = "Bạn chưa nhập từ khóa tìm kiếm."; return; }
     if (searchInput) searchInput.value = keyword;
     if (displayEl) displayEl.innerHTML = `Từ khóa: <span class="font-bold text-black">"${keyword}"</span>`;
-    if (container) container.innerHTML = '<p class="col-span-4 text-center text-gray-500">Đang tìm kiếm...</p>';
-
+    
     try {
         const products = await API.get(`/products?keyword=${keyword}`);
         if (container) {
@@ -121,35 +92,140 @@ async function loadSearchPage() {
                 container.innerHTML = `<div class="col-span-full text-center py-10"><p class="text-xl text-gray-500 mb-4">Không tìm thấy sản phẩm nào.</p><a href="index.html" class="text-blue-600 font-bold hover:underline">Về trang chủ</a></div>`;
             }
         }
-    } catch (error) {
-        console.error(error);
-    }
+    } catch (error) { console.error(error); }
 }
 
-// ================= KHỞI TẠO CHUNG =================
+// === PHẦN 3: LOGIC AUTH (ĐĂNG NHẬP / ĐĂNG KÝ / MODAL) - MỚI ===
+const AuthManager = {
+    modal: null,
+    
+    init() {
+        this.modal = document.getElementById('auth-modal');
+        this.checkLoginStatus();
+        this.bindEvents();
+    },
+
+    toggleModal(show) {
+        if (this.modal) {
+            if (show) this.modal.classList.remove('hidden');
+            else this.modal.classList.add('hidden');
+        }
+    },
+
+    switchForm(type) {
+        const formLogin = document.getElementById('form-login');
+        const formRegister = document.getElementById('form-register');
+        if (formLogin && formRegister) {
+            formLogin.classList.toggle('hidden', type !== 'login');
+            formRegister.classList.toggle('hidden', type !== 'register');
+        }
+    },
+
+    checkLoginStatus() {
+        const authBtn = document.getElementById('authBtn');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (authBtn) {
+            if (user) {
+                authBtn.innerHTML = `<div class="flex items-center gap-1"><span class="text-xs font-bold truncate max-w-[80px]">${user.name}</span></div>`;
+                // Gán sự kiện Logout
+                authBtn.onclick = (e) => {
+                    e.preventDefault(); // Ngăn chặn hành vi mặc định nếu có
+                    if (confirm('Đăng xuất?')) {
+                        localStorage.clear();
+                        window.location.reload();
+                    }
+                };
+            } else {
+                // Gán sự kiện mở Modal Login
+                authBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.toggleModal(true);
+                    this.switchForm('login');
+                };
+            }
+        }
+    },
+
+    bindEvents() {
+        // Form Login Submit
+        const formLogin = document.getElementById('form-login');
+        if (formLogin) {
+            formLogin.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const pass = document.getElementById('login-password').value;
+                const res = await API.post('/auth/login', { Email: email, MatKhau: pass });
+                
+                if (res.token) {
+                    localStorage.setItem('token', res.token);
+                    localStorage.setItem('user', JSON.stringify(res.user));
+                    
+                    // Merge giỏ hàng offline vào online nếu có
+                    const localCart = JSON.parse(localStorage.getItem('cart_items') || '[]');
+                    if (localCart.length > 0) {
+                        await API.post('/cart/merge', { items: localCart });
+                        localStorage.removeItem('cart_items');
+                    }
+                    
+                    alert('Đăng nhập thành công!');
+                    this.toggleModal(false);
+                    window.location.reload();
+                } else {
+                    alert(res.message || 'Lỗi đăng nhập');
+                }
+            });
+        }
+
+        // Form Register Submit
+        const formRegister = document.getElementById('form-register');
+        if (formRegister) {
+            formRegister.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = {
+                    HoTen: document.getElementById('reg-name').value,
+                    SoDienThoai: document.getElementById('reg-phone').value,
+                    Email: document.getElementById('reg-email').value,
+                    MatKhau: document.getElementById('reg-pass').value
+                };
+                const res = await API.post('/auth/register', data);
+                if (res.userId) {
+                    alert('Đăng ký thành công! Vui lòng đăng nhập.');
+                    this.switchForm('login');
+                } else {
+                    alert(res.message);
+                }
+            });
+        }
+
+        // Close Modal Buttons (Nút X và Nền đen)
+        const closeBtns = document.querySelectorAll('.close-auth-modal');
+        closeBtns.forEach(btn => btn.onclick = () => this.toggleModal(false));
+    }
+};
+
+// === KHỞI TẠO CHUNG ===
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
 
-    // Router đơn giản
-    if (path.includes('search.html')) {
-        loadSearchPage();
-    } else if (path.includes('index.html') || path.endsWith('/') || path.endsWith('pages/')) {
-        loadHomeData();
-    }
+    // Router
+    if (path.includes('search.html')) loadSearchPage();
+    else if (path.includes('index.html') || path.endsWith('/')) loadHomeData();
 
-    // Sự kiện nút tìm kiếm (chung cho mọi trang)
+    // Search Event
     const btnSearch = document.getElementById('btnSearch');
     const searchInput = document.getElementById('searchInput');
-
     if(btnSearch && searchInput) {
         btnSearch.addEventListener('click', handleSearchRedirect);
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleSearchRedirect();
-        });
+        searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearchRedirect(); });
     }
 
-    // Cập nhật badge giỏ hàng
-    if (typeof CartManager !== 'undefined') {
-        CartManager.updateBadge();
-    }
+    // Init Auth
+    AuthManager.init();
+
+    // Update Cart Badge
+    if (typeof CartManager !== 'undefined') CartManager.updateBadge();
 });
+
+// Expose AuthManager global để gọi từ HTML nếu cần (ví dụ onclick chuyển form)
+window.AuthManager = AuthManager;

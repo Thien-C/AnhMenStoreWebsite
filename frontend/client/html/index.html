@@ -12,16 +12,9 @@
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         .product-card:hover .product-img { transform: scale(1.03); }
         .product-img { transition: transform 0.3s ease; }
-        .color-swatch {
-            width: 24px; height: 12px; 
-            border-radius: 2px; cursor: pointer;
-            border: 1px solid #e5e7eb; transition: all 0.2s;
-        }
+        .color-swatch { width: 24px; height: 12px; border-radius: 2px; cursor: pointer; border: 1px solid #e5e7eb; transition: all 0.2s; }
         .color-swatch:hover, .color-swatch.active { border-color: #000; transform: scale(1.1); }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out; }
     </style>
 </head>
@@ -39,7 +32,6 @@
                 <a href="#" class="hover:text-blue-600 transition">Sản phẩm</a>
                 <a href="#" class="hover:text-blue-600 transition">Đồ lót</a>
                 <a href="#" class="hover:text-blue-600 transition">Mặc hàng ngày</a>
-                <a href="#" class="hover:text-blue-600 transition">Thể thao</a>
                 <a href="#" class="text-red-600 hover:text-red-700 transition">Outlet</a>
             </nav>
 
@@ -75,61 +67,20 @@
         </div>
     </section>
 
-    <section class="container mx-auto px-4 py-8">
-        <div class="flex justify-between md:justify-center md:gap-12 overflow-x-auto hide-scroll text-center">
-            <a href="#" class="group min-w-[80px] flex flex-col items-center">
-                <div class="w-20 h-20 rounded-2xl overflow-hidden mb-2 border border-transparent group-hover:border-blue-500 transition">
-                    <img src="https://media.coolmate.me/cdn-cgi/image/width=160,height=160,quality=80,format=auto/uploads/March2024/ao-thun-nam.jpg" class="w-full h-full object-cover">
-                </div>
-                <span class="text-xs font-bold uppercase group-hover:text-blue-600">Áo Thun</span>
-            </a>
-            <a href="#" class="group min-w-[80px] flex flex-col items-center">
-                <div class="w-20 h-20 rounded-2xl overflow-hidden mb-2 border border-transparent group-hover:border-blue-500 transition">
-                    <img src="https://media.coolmate.me/cdn-cgi/image/width=160,height=160,quality=80,format=auto/uploads/March2024/quan-short-nam.jpg" class="w-full h-full object-cover">
-                </div>
-                <span class="text-xs font-bold uppercase group-hover:text-blue-600">Quần Short</span>
-            </a>
-            <a href="#" class="group min-w-[80px] flex flex-col items-center">
-                <div class="w-20 h-20 rounded-2xl overflow-hidden mb-2 border border-transparent group-hover:border-blue-500 transition">
-                    <img src="https://media.coolmate.me/cdn-cgi/image/width=160,height=160,quality=80,format=auto/uploads/March2024/quan-lot-nam.jpg" class="w-full h-full object-cover">
-                </div>
-                <span class="text-xs font-bold uppercase group-hover:text-blue-600">Quần Lót</span>
-            </a>
-             <a href="#" class="group min-w-[80px] flex flex-col items-center">
-                <div class="w-20 h-20 rounded-2xl overflow-hidden mb-2 border border-transparent group-hover:border-blue-500 transition">
-                    <img src="https://media.coolmate.me/cdn-cgi/image/width=160,height=160,quality=80,format=auto/uploads/March2024/ao-so-mi-nam.jpg" class="w-full h-full object-cover">
-                </div>
-                <span class="text-xs font-bold uppercase group-hover:text-blue-600">Sơ Mi</span>
-            </a>
-        </div>
-    </section>
-
-    <section class="container mx-auto px-4 py-8 border-t border-gray-100">
+    <section class="container mx-auto px-4 py-8 border-t border-gray-100 mt-8">
         <div class="mb-6 flex justify-between items-end">
             <h2 class="text-2xl md:text-3xl font-extrabold uppercase italic tracking-tighter">Đồ Thu Đông</h2>
             <a href="#" class="text-sm font-semibold underline hover:text-blue-600">Xem tất cả</a>
         </div>
-        
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div id="winter-products" class="col-span-1 md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8">
-                </div>
+            <div id="winter-products" class="col-span-1 md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8"></div>
         </div>
     </section>
 
     <section class="bg-gray-100 py-12 mt-8">
         <div class="container mx-auto px-4">
-            <div class="mb-6">
-                <h2 class="text-2xl md:text-3xl font-extrabold uppercase italic tracking-tighter">Đồ Chạy Bộ</h2>
-            </div>
-            <div class="w-full h-[300px] md:h-[400px] mb-8 overflow-hidden rounded-xl relative group">
-                 <img src="https://media.coolmate.me/cdn-cgi/image/width=1920,quality=80,format=auto/uploads/February2024/runing_banner_desktop.jpg" class="w-full h-full object-cover transition duration-700 group-hover:scale-105">
-                 <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
-                    <button class="bg-white text-black font-bold py-2 px-6 rounded-full hover:bg-gray-200">Khám phá Running</button>
-                 </div>
-            </div>
-
-            <div id="running-products" class="flex overflow-x-auto gap-4 hide-scroll pb-4 snap-x">
-                </div>
+            <div class="mb-6"><h2 class="text-2xl md:text-3xl font-extrabold uppercase italic tracking-tighter">Đồ Chạy Bộ</h2></div>
+            <div id="running-products" class="flex overflow-x-auto gap-4 hide-scroll pb-4 snap-x"></div>
         </div>
     </section>
 
@@ -141,10 +92,10 @@
     </footer>
 
     <div id="auth-modal" class="fixed inset-0 z-[100] hidden">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAuthModal()"></div>
+        <div class="close-auth-modal absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div class="relative flex items-center justify-center min-h-screen px-4">
             <div class="bg-white w-full max-w-[500px] rounded-3xl p-8 relative shadow-2xl animate-fade-in-up">
-                <button onclick="closeAuthModal()" class="absolute -top-4 -right-4 md:-right-10 bg-black text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-800 transition">✕</button>
+                <button class="close-auth-modal absolute -top-4 -right-4 md:-right-10 bg-black text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-800 transition">✕</button>
                 
                 <div id="auth-header" class="mb-6 text-center">
                      <div class="text-blue-600 font-black text-2xl mb-2 tracking-tighter">ANHMEN<span class="bg-blue-600 text-white px-1 rounded">CLUB</span></div>
@@ -156,7 +107,7 @@
                     <input type="password" id="login-password" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300">
                     <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90">ĐĂNG NHẬP</button>
                     <div class="flex justify-between text-sm font-semibold mt-4">
-                        <a href="#" onclick="switchForm('register')" class="text-blue-700 hover:underline">Đăng ký mới</a>
+                        <a href="#" onclick="AuthManager.switchForm('register'); return false;" class="text-blue-700 hover:underline">Đăng ký mới</a>
                     </div>
                 </form>
 
@@ -166,66 +117,14 @@
                     <input type="email" id="reg-email" placeholder="Email" class="w-full px-4 py-3 rounded-full border border-gray-300">
                     <input type="password" id="reg-pass" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300">
                     <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90">ĐĂNG KÝ</button>
-                    <div class="text-center mt-4"><a href="#" onclick="switchForm('login')" class="text-blue-700 font-bold hover:underline">Quay lại đăng nhập</a></div>
+                    <div class="text-center mt-4"><a href="#" onclick="AuthManager.switchForm('login'); return false;" class="text-blue-700 font-bold hover:underline">Quay lại đăng nhập</a></div>
                 </form>
             </div>
         </div>
     </div>
 
-    <script>
-        // Logic Auth Modal đơn giản
-        const modal = document.getElementById('auth-modal');
-        const formLogin = document.getElementById('form-login');
-        const formRegister = document.getElementById('form-register');
-        function closeAuthModal() { modal.classList.add('hidden'); }
-        function switchForm(type) {
-            formLogin.classList.toggle('hidden', type !== 'login');
-            formRegister.classList.toggle('hidden', type !== 'register');
-        }
-    </script>
-
     <script src="../js/api.js"></script>
     <script src="../js/cart.js"></script>
     <script src="../js/main.js"></script> 
-    <script>
-        // Logic JS Inline giữ nguyên nhưng gọi hàm từ các file đã link
-        // (Phần lớn logic đã được chuyển vào main.js ở câu trả lời trước)
-        const authBtn = document.getElementById('authBtn');
-        const user = JSON.parse(localStorage.getItem('user'));
-        
-        if(user) {
-            authBtn.innerHTML = `<div class="flex items-center gap-1"><span class="text-xs font-bold truncate max-w-[80px]">${user.name}</span></div>`;
-            authBtn.onclick = () => { if(confirm('Đăng xuất?')) { localStorage.clear(); location.reload(); } };
-        } else {
-            authBtn.onclick = () => { modal.classList.remove('hidden'); switchForm('login'); };
-        }
-
-        formLogin.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            const res = await API.post('/auth/login', { Email: email, MatKhau: pass });
-            if (res.token) {
-                localStorage.setItem('token', res.token);
-                localStorage.setItem('user', JSON.stringify(res.user));
-                // Merge cart logic here if needed
-                alert('Đăng nhập thành công!');
-                window.location.reload(); 
-            } else { alert(res.message || 'Lỗi đăng nhập'); }
-        });
-        
-        formRegister.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = {
-                HoTen: document.getElementById('reg-name').value,
-                SoDienThoai: document.getElementById('reg-phone').value,
-                Email: document.getElementById('reg-email').value,
-                MatKhau: document.getElementById('reg-pass').value
-            };
-            const res = await API.post('/auth/register', data);
-            if (res.userId) { alert('Đăng ký thành công!'); switchForm('login'); }
-            else { alert(res.message); }
-        });
-    </script>
 </body>
 </html>
