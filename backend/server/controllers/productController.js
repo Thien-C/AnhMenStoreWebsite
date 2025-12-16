@@ -1,11 +1,15 @@
 const { connectDB, sql } = require('../config/dbConfig');
 
 // API 1: Lấy danh sách sản phẩm (Có Filter & Search)
+// API 1: Lấy danh sách sản phẩm (Có Search Keyword)
 exports.getProducts = async (req, res) => {
     try {
         const pool = await connectDB();
-        const { category, keyword } = req.query;
+        const { category, keyword } = req.query; // Lấy tham số từ URL
 
+        const request = pool.request();
+
+        // Câu lệnh SQL cơ bản
         let query = `
             SELECT 
                 sp.MaSP, sp.TenSP, sp.TrangThai, 
@@ -15,35 +19,38 @@ exports.getProducts = async (req, res) => {
                 bt_dai_dien.MaBienThe
             FROM SanPham sp
             LEFT JOIN DanhMuc dm ON sp.MaDanhMuc = dm.MaDanhMuc
-            -- Kỹ thuật OUTER APPLY: Lấy biến thể có giá thấp nhất làm đại diện
+            -- OUTER APPLY: Lấy biến thể đại diện (ưu tiên giá thấp nhất)
             OUTER APPLY (
                 SELECT TOP 1 MaBienThe, Gia, HinhAnh 
                 FROM SanPham_BienThe 
-                WHERE MaSP = sp.MaSP 
+                WHERE MaSP = sp.MaSP AND SoLuongTon > 0
                 ORDER BY Gia ASC
             ) bt_dai_dien
             WHERE sp.TrangThai = N'Đang bán'
         `;
 
-        const request = pool.request();
+        // --- XỬ LÝ TÌM KIẾM (SEARCH) ---
+        if (keyword) {
+            // Thêm điều kiện LIKE
+            query += ` AND sp.TenSP LIKE @Keyword`;
+            // Gán tham số an toàn (tránh SQL Injection)
+            request.input('Keyword', sql.NVarChar, `%${keyword}%`);
+        }
 
-        // Xử lý Filter Dynamic
+        // --- XỬ LÝ LỌC DANH MỤC (NẾU CÓ) ---
         if (category) {
             query += ` AND sp.MaDanhMuc = @Category`;
             request.input('Category', sql.Int, category);
         }
 
-        if (keyword) {
-            query += ` AND sp.TenSP LIKE @Keyword`;
-            request.input('Keyword', sql.NVarChar, `%${keyword}%`);
-        }
-
+        // Sắp xếp mặc định: Mới nhất lên đầu
         query += ` ORDER BY sp.NgayTao DESC`;
 
         const result = await request.query(query);
         res.json(result.recordset);
 
     } catch (err) {
+        console.error("Lỗi lấy sản phẩm:", err);
         res.status(500).json({ message: err.message });
     }
 };

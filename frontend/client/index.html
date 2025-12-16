@@ -49,16 +49,26 @@
                 <a href="#" class="text-red-600 hover:text-red-700 transition">Outlet</a>
             </nav>
 
-            <div class="flex items-center space-x-5">
-                <button class="hover:text-blue-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+            <div class="flex items-center space-x-3">
+                <div class="relative hidden md:flex items-center border rounded-full px-3 py-1 bg-gray-100 focus-within:bg-white focus-within:ring-2 ring-black">
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm..." class="bg-transparent outline-none text-sm w-40">
+                    <button id="btnSearch" class="text-gray-600 hover:text-black">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                </div>
+
+                <button class="md:hidden hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
                 
                 <div class="relative group">
                     <button id="authBtn" class="hover:text-blue-600 flex items-center">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     </button>
-                    </div>
+                </div>
 
-                <button class="relative hover:text-blue-600" onclick="window.location.href='cart.html'"> <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                <button class="relative hover:text-blue-600" onclick="window.location.href='cart.html'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     <span id="cart-count" class="absolute -top-1 -right-2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
                 </button>
             </div>
@@ -438,6 +448,82 @@
         }
 
         loadHomeData();
+        async function handleSearch() {
+            const input = document.getElementById('searchInput');
+            const keyword = input.value.trim();
+
+            if (!keyword) {
+                alert("Vui lòng nhập từ khóa!");
+                return;
+            }
+
+            // Gọi API tìm kiếm
+            const products = await API.get(`/products?keyword=${keyword}`);
+
+            // Hiển thị kết quả vào khu vực Grid chính (Winter Products)
+            const resultContainer = document.getElementById('winter-products');
+            const runningSection = document.getElementById('running-products').closest('section'); // Tìm section chứa running để ẩn đi
+            const titleSection = resultContainer.closest('section').querySelector('h2'); // Tìm tiêu đề để đổi tên
+
+            if (resultContainer) {
+                resultContainer.innerHTML = ''; // Xóa cũ
+                
+                // Ẩn section chạy bộ đi cho gọn
+                if(runningSection) runningSection.style.display = 'none';
+                
+                // Đổi tiêu đề
+                if(titleSection) titleSection.innerText = `Kết quả tìm kiếm: "${keyword}"`;
+
+                if (products.length === 0) {
+                    resultContainer.innerHTML = '<p class="col-span-4 text-center py-10 text-gray-500">Không tìm thấy sản phẩm nào phù hợp.</p>';
+                } else {
+                    products.forEach(p => {
+                        resultContainer.innerHTML += renderProductCard(p);
+                    });
+                }
+                
+                // Cuộn xuống kết quả
+                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // ================= 4. KHỞI TẠO SỰ KIỆN (EVENT LISTENER) =================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load sản phẩm ban đầu
+            loadHomeData();
+
+            // Gắn sự kiện cho nút tìm kiếm
+            const btnSearch = document.getElementById('btnSearch');
+            const searchInput = document.getElementById('searchInput');
+
+            if(btnSearch && searchInput) {
+                // Click nút kính lúp
+                btnSearch.addEventListener('click', handleSearch);
+
+                // Nhấn Enter
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        handleSearch();
+                    }
+                });
+            }
+        });
+
+        // ================= 5. LOGIC AUTH (LOGIN POPUP) =================
+        // (Giữ nguyên logic Auth Modal cũ của bạn ở đây nếu cần, hoặc tách ra file auth.js)
+        if(user) {
+            authBtn.innerHTML = `<span class="text-xs font-bold mr-1">Chào, ${user.name}</span>`;
+            authBtn.onclick = () => { 
+                if(confirm('Đăng xuất?')) { localStorage.clear(); location.reload(); } 
+            };
+        } else {
+            authBtn.onclick = () => { if(modal) modal.classList.remove('hidden'); };
+        }
+        
+        // Hàm đóng modal
+        function closeAuthModal() {
+            if(modal) modal.classList.add('hidden');
+        }
     </script>
 
 </body>
