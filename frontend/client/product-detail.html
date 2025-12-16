@@ -21,9 +21,13 @@
         <div class="bg-white rounded-xl shadow-lg p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-10">
             
             <div class="flex flex-col items-center">
-                <img id="main-img" src="https://via.placeholder.com/500" class="w-full max-w-md object-cover rounded-lg shadow-sm">
+            <div class="w-full max-w-md aspect-[3/4] overflow-hidden rounded-lg shadow-sm mb-4">
+                    <img id="main-img" src="https://via.placeholder.com/500" class="w-full h-full object-cover">
+                </div>
+                
+                <div id="image-gallery" class="flex gap-4 overflow-x-auto p-2">
+                    </div>
             </div>
-
             <div>
                 <h1 id="p-name" class="text-3xl font-bold mb-2 text-gray-800">Đang tải tên...</h1>
                 <p id="p-price" class="text-2xl font-bold text-blue-600 mb-4">--- ₫</p>

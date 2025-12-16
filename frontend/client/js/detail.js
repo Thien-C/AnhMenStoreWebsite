@@ -24,93 +24,115 @@ async function loadProductDetail(id) {
 
     productData = data;
     
-    // 2. Render thông tin chung
+    // 1. Render thông tin chung
     document.getElementById('p-name').innerText = data.name;
     document.getElementById('p-desc').innerText = data.desc || 'Không có mô tả';
     document.title = data.name + ' - Anh Men Store';
+
+    // 2. Render Gallery ảnh (YÊU CẦU MỚI)
+    renderImageGallery(data.variants);
 
     // 3. Render các nút chọn biến thể
     renderVariantOptions();
 }
 
+// --- HÀM MỚI: Xử lý hiển thị ảnh ---
+function renderImageGallery(variants) {
+    const mainImg = document.getElementById('main-img');
+    const galleryContainer = document.getElementById('image-gallery');
+
+    // Lọc ra danh sách các link ảnh duy nhất (loại bỏ trùng lặp và null)
+    const uniqueImages = [...new Set(variants.map(v => v.image).filter(img => img))];
+
+    if (uniqueImages.length > 0) {
+        // A. Đặt ảnh đại diện là ảnh đầu tiên trong danh sách (kể cả chưa chọn size/màu)
+        mainImg.src = uniqueImages[0];
+
+        // B. Render danh sách ảnh nhỏ bên dưới
+        galleryContainer.innerHTML = uniqueImages.map((img, index) => `
+            <div class="w-20 h-24 border border-gray-200 rounded cursor-pointer hover:border-black transition overflow-hidden" 
+                 onclick="changeMainImage('${img}')">
+                <img src="${img}" class="w-full h-full object-cover">
+            </div>
+        `).join('');
+    } else {
+        mainImg.src = 'https://via.placeholder.com/500?text=No+Image';
+        galleryContainer.innerHTML = '';
+    }
+}
+
+// Hàm sự kiện khi click vào ảnh nhỏ
+function changeMainImage(src) {
+    document.getElementById('main-img').src = src;
+}
+// -----------------------------------
+
 function renderVariantOptions() {
     const variants = productData.variants;
-
     const uniqueColors = [...new Set(variants.map(v => v.color))];
     const uniqueSizes = [...new Set(variants.map(v => v.size))];
 
     // Render nút Màu
-    const colorContainer = document.getElementById('color-options');
-    colorContainer.innerHTML = uniqueColors.map(c => 
+    document.getElementById('color-options').innerHTML = uniqueColors.map(c => 
         `<button class="option-btn color-btn" onclick="selectColor('${c}')">${c}</button>`
     ).join('');
 
     // Render nút Size
-    const sizeContainer = document.getElementById('size-options');
-    sizeContainer.innerHTML = uniqueSizes.map(s => 
+    document.getElementById('size-options').innerHTML = uniqueSizes.map(s => 
         `<button class="option-btn size-btn" onclick="selectSize('${s}')">${s}</button>`
     ).join('');
-    
-    // Mặc định chọn biến thể đầu tiên (nếu muốn)
-    // selectColor(uniqueColors[0]);
-    // selectSize(uniqueSizes[0]);
 }
 
 function selectColor(color) {
     selectedColor = color;
-    
-    // UI Update: Highlight nút màu
+    // Highlight nút
     document.querySelectorAll('.color-btn').forEach(btn => {
         btn.classList.toggle('active', btn.innerText === color);
     });
-
     checkVariant();
 }
 
 function selectSize(size) {
     selectedSize = size;
-
-    // UI Update: Highlight nút size
+    // Highlight nút
     document.querySelectorAll('.size-btn').forEach(btn => {
         btn.classList.toggle('active', btn.innerText === size);
     });
-
     checkVariant();
 }
 
-// Hàm LOGIC QUAN TRỌNG NHẤT: Kiểm tra xem User chọn cặp Màu/Size có tồn tại không
 function checkVariant() {
     const btnAdd = document.getElementById('add-to-cart');
     const priceEl = document.getElementById('p-price');
-    const imgEl = document.getElementById('main-img');
     const stockEl = document.getElementById('stock-status');
+    // Lưu ý: Không đổi ảnh main ở đây nữa nếu bạn muốn giữ ảnh người dùng đang xem từ gallery
+    // Hoặc nếu muốn: Khi chọn đúng biến thể -> Tự động đổi ảnh main sang ảnh biến thể đó:
+    const mainImg = document.getElementById('main-img');
 
     if (!selectedColor || !selectedSize) return;
 
-    // Tìm biến thể khớp cả Màu và Size trong mảng variants
     currentVariant = productData.variants.find(v => 
         v.color === selectedColor && v.size === selectedSize
     );
 
     if (currentVariant) {
-        // CÓ HÀNG
+        // Cập nhật giá
         priceEl.innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentVariant.price);
         
+        // Tự động nhảy ảnh theo biến thể (Optional - theo trải nghiệm người dùng tốt nhất)
         if (currentVariant.image) {
-            imgEl.src = currentVariant.image;
+            mainImg.src = currentVariant.image;
         }
 
         if (currentVariant.stock > 0) {
             stockEl.innerText = `Còn hàng (Tồn: ${currentVariant.stock})`;
             stockEl.className = 'text-sm mb-4 font-semibold text-green-600';
             
-            // Enable nút mua
             btnAdd.disabled = false;
             btnAdd.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
             btnAdd.classList.add('bg-black', 'text-white', 'hover:bg-gray-800');
             btnAdd.innerText = 'THÊM VÀO GIỎ';
             
-            // Gán sự kiện thêm giỏ hàng (Phase 3 sẽ xử lý kỹ hơn)
             btnAdd.onclick = function() {
                 addToCart(currentVariant.variantId);
             };
@@ -119,7 +141,6 @@ function checkVariant() {
             stockEl.className = 'text-sm mb-4 font-semibold text-red-600';
             disableBuyButton(btnAdd);
         }
-
     } else {
         priceEl.innerText = '---';
         stockEl.innerText = 'Phiên bản không tồn tại';
@@ -134,6 +155,5 @@ function disableBtn(btn) {
 }
 
 async function addToCart(variantId) {
-    const qty = 1; // Mặc định 1, sau này có thể thêm input số lượng
-    await CartManager.addToCart(variantId, qty);
+    await CartManager.addToCart(variantId, 1);
 }
