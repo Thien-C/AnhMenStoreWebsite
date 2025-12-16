@@ -45,6 +45,9 @@ async function loadProductDetail(id) {
 
     // Render Options
     renderVariantOptions();
+    // Load Reviews
+    loadReviews(id); 
+    setupStarRating();
 }
 
 function renderImageGallery(variants) {
@@ -157,4 +160,113 @@ async function addToCart(variantId) {
     if (!currentVariant) return;
     const qty = parseInt(document.getElementById('quantity').value) || 1;
     await CartManager.addToCart(variantId, qty);
+}
+// === LOGIC ĐÁNH GIÁ (REVIEW) ===
+
+// 1. Tải danh sách đánh giá
+async function loadReviews(prodId) {
+    const container = document.getElementById('reviews-list');
+    try {
+        const reviews = await API.get(`/reviews/${prodId}`);
+        
+        if (!Array.isArray(reviews) || reviews.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 italic">Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!</p>';
+            return;
+        }
+
+        // Helper tạo sao vàng
+        const renderStars = (n) => {
+            let html = '';
+            for(let i=1; i<=5; i++) {
+                html += `<svg class="w-4 h-4 ${i <= n ? 'text-yellow-400' : 'text-gray-300'}" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+            }
+            return html;
+        };
+
+        container.innerHTML = reviews.map(r => `
+            <div class="border-b border-gray-100 pb-4 last:border-0">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-xs text-gray-600">
+                            ${r.HoTen.charAt(0)}
+                        </div>
+                        <span class="font-bold text-sm text-gray-800">${r.HoTen}</span>
+                    </div>
+                    <span class="text-xs text-gray-400">${new Date(r.NgayDanhGia).toLocaleDateString('vi-VN')}</span>
+                </div>
+                <div class="flex mb-2">${renderStars(r.SoSao)}</div>
+                <p class="text-gray-600 text-sm">${r.BinhLuan || ''}</p>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-red-500">Lỗi tải đánh giá.</p>';
+    }
+}
+
+// 2. Xử lý UI chọn sao (Click để chọn)
+function setupStarRating() {
+    const stars = document.querySelectorAll('#star-rating-group .star-icon');
+    const input = document.getElementById('rating-value');
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const val = parseInt(star.dataset.value);
+            input.value = val;
+            
+            // Cập nhật màu
+            stars.forEach(s => {
+                if(parseInt(s.dataset.value) <= val) {
+                    s.classList.add('text-yellow-400');
+                    s.classList.remove('text-gray-300');
+                } else {
+                    s.classList.remove('text-yellow-400');
+                    s.classList.add('text-gray-300');
+                }
+            });
+        });
+    });
+}
+
+// 3. Gửi đánh giá
+async function submitReview() {
+    // Check đăng nhập
+    const token = localStorage.getItem('token');
+    if(!token) {
+        alert('Vui lòng đăng nhập để viết đánh giá!');
+        // Mở modal đăng nhập nếu có (sử dụng AuthManager global từ main.js)
+        if(window.AuthManager) {
+            window.AuthManager.toggleModal(true);
+            window.AuthManager.switchForm('login');
+        }
+        return;
+    }
+
+    const productId = new URLSearchParams(window.location.search).get('id');
+    const soSao = document.getElementById('rating-value').value;
+    const binhLuan = document.getElementById('review-content').value;
+
+    if(!binhLuan.trim()) {
+        alert('Vui lòng nhập nội dung đánh giá!');
+        return;
+    }
+
+    try {
+        const res = await API.post('/reviews', {
+            productId: productId,
+            soSao: parseInt(soSao),
+            binhLuan: binhLuan
+        });
+
+        if(res.message) {
+            alert(res.message);
+            // Reset form
+            document.getElementById('review-content').value = '';
+            // Reload lại danh sách
+            loadReviews(productId);
+        }
+    } catch (e) {
+        alert('Lỗi khi gửi đánh giá: ' + e.message);
+    }
 }

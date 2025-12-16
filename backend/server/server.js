@@ -8,6 +8,7 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const userRoutes = require('./routes/userRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 const app = express();
 
 // Middleware
@@ -20,6 +21,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/reviews', reviewRoutes);
 // Test Route
 app.get('/', (req, res) => {
     res.send('Anh Men Store API is running...');

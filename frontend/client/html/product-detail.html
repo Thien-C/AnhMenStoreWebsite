@@ -83,6 +83,35 @@
             </div>
         </div>
     </div>
+    <div class="container mx-auto px-4 mt-12 mb-12">
+        <div class="bg-white rounded-xl shadow-lg p-6 md:p-10">
+            <h2 class="text-2xl font-bold mb-6 border-b pb-4">Đánh giá sản phẩm</h2>
+
+            <div id="review-form-container" class="mb-10 bg-gray-50 p-6 rounded-lg">
+                <h3 class="font-bold text-lg mb-3">Viết đánh giá của bạn</h3>
+                
+                <div class="flex items-center gap-1 mb-4">
+                    <span class="mr-2 font-medium">Chất lượng:</span>
+                    <div class="flex gap-1 cursor-pointer" id="star-rating-group">
+                        <svg class="w-8 h-8 text-gray-300 hover:text-yellow-400 star-icon" data-value="1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg class="w-8 h-8 text-gray-300 hover:text-yellow-400 star-icon" data-value="2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg class="w-8 h-8 text-gray-300 hover:text-yellow-400 star-icon" data-value="3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg class="w-8 h-8 text-gray-300 hover:text-yellow-400 star-icon" data-value="4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg class="w-8 h-8 text-gray-300 hover:text-yellow-400 star-icon" data-value="5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    </div>
+                    <input type="hidden" id="rating-value" value="5">
+                </div>
+
+                <textarea id="review-content" rows="3" class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:border-black mb-4" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..."></textarea>
+                
+                <button onclick="submitReview()" class="bg-black text-white font-bold py-2 px-6 rounded hover:bg-gray-800 transition">Gửi đánh giá</button>
+            </div>
+
+            <div id="reviews-list" class="space-y-6">
+                <p class="text-gray-500">Đang tải đánh giá...</p>
+            </div>
+        </div>
+    </div>
     <footer class="bg-white border-t border-gray-200 pt-10 pb-8 mt-12 text-gray-700 text-sm">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
