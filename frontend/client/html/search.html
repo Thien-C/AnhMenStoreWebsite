@@ -11,6 +11,8 @@
         .product-card:hover .product-img { transform: scale(1.03); }
         .product-img { transition: transform 0.3s ease; }
         .color-swatch { width: 24px; height: 12px; border-radius: 2px; cursor: pointer; border: 1px solid #e5e7eb; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.3s ease-out; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
@@ -198,6 +200,67 @@
             </div>
         </div>
     </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="close-auth-modal absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative flex items-center justify-center min-h-screen px-4">
+            <div class="bg-white w-full max-w-[500px] rounded-3xl p-8 relative shadow-2xl animate-fade-in-up">
+                <button class="close-auth-modal absolute -top-4 -right-4 md:-right-10 bg-black text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-800 transition">✕</button>
+                
+                <div id="auth-header" class="mb-6 text-center">
+                     <div class="text-blue-600 font-black text-2xl mb-2 tracking-tighter">ANHMEN<span class="bg-blue-600 text-white px-1 rounded">CLUB</span></div>
+                     <p class="text-sm font-bold">Đăng nhập để nhận ưu đãi</p>
+                </div>
+
+                <form id="form-login" class="space-y-4">
+                    <input type="text" id="login-email" placeholder="Email/SĐT" class="w-full px-4 py-3 rounded-full border border-gray-300">
+                    <input type="password" id="login-password" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300">
+                    <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90">ĐĂNG NHẬP</button>
+                    <div class="flex justify-between text-sm font-semibold mt-4">
+                        <a href="#" onclick="AuthManager.switchForm('register'); return false;" class="text-blue-700 hover:underline">Đăng ký mới</a>
+                        <a href="#" onclick="AuthManager.switchForm('forgot'); return false;" class="text-red-600 hover:underline">Quên mật khẩu?</a>
+                    </div>
+                </form>
+
+                <form id="form-register" class="space-y-4 hidden">
+                    <input type="text" id="reg-name" placeholder="Họ tên" class="w-full px-4 py-3 rounded-full border border-gray-300">
+                    <input type="text" id="reg-phone" placeholder="Số điện thoại" class="w-full px-4 py-3 rounded-full border border-gray-300">
+                    <input type="email" id="reg-email" placeholder="Email" class="w-full px-4 py-3 rounded-full border border-gray-300">
+                    <input type="password" id="reg-pass" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300">
+                    <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90">ĐĂNG KÝ</button>
+                    <div class="text-center mt-4"><a href="#" onclick="AuthManager.switchForm('login'); return false;" class="text-blue-700 font-bold hover:underline">Quay lại đăng nhập</a></div>
+                </form>
+
+                <!-- Form Quên mật khẩu - Bước 1: Nhập email -->
+                <form id="form-forgot" class="space-y-4 hidden">
+                    <div class="text-center mb-4">
+                        <p class="text-sm text-gray-600">Nhập email của bạn để nhận mã OTP</p>
+                    </div>
+                    <input type="email" id="forgot-email" placeholder="Email đã đăng ký" class="w-full px-4 py-3 rounded-full border border-gray-300" required>
+                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-3 rounded-full hover:opacity-90">GỬI MÃ OTP</button>
+                    <div class="text-center mt-4"><a href="#" onclick="AuthManager.switchForm('login'); return false;" class="text-blue-700 font-bold hover:underline">Quay lại đăng nhập</a></div>
+                </form>
+
+                <!-- Form nhập OTP và mật khẩu mới -->
+                <form id="form-reset-password" class="space-y-4 hidden">
+                    <div class="text-center mb-4">
+                        <p class="text-sm text-gray-600">Nhập mã OTP đã gửi về email và mật khẩu mới</p>
+                        <p id="otp-email-display" class="text-sm text-blue-600 font-medium"></p>
+                    </div>
+                    <input type="text" id="reset-otp" placeholder="Mã OTP (6 số)" class="w-full px-4 py-3 rounded-full border border-gray-300" maxlength="6" required>
+                    <input type="password" id="new-password" placeholder="Mật khẩu mới" class="w-full px-4 py-3 rounded-full border border-gray-300" required>
+                    <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu mới" class="w-full px-4 py-3 rounded-full border border-gray-300" required>
+                    <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-full hover:opacity-90">ĐỔI MẬT KHẨU</button>
+                    <div class="text-center mt-4">
+                        <a href="#" onclick="AuthManager.switchForm('forgot'); return false;" class="text-blue-700 font-bold hover:underline text-sm">Gửi lại mã OTP</a>
+                        <span class="text-gray-400 mx-2">|</span>
+                        <a href="#" onclick="AuthManager.switchForm('login'); return false;" class="text-blue-700 font-bold hover:underline text-sm">Quay lại đăng nhập</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     
     <script src="../js/api.js"></script>
     <script src="../js/cart.js"></script>
@@ -220,6 +283,7 @@
         function setQuickPrice(min, max) {
             document.getElementById('filter-min-price').value = min;
             document.getElementById('filter-max-price').value = max === 999999999 ? '' : max;
+            applyFilters(); // Tự động áp dụng filter
         }
 
         // Toggle filter cho mobile
@@ -247,58 +311,44 @@
             }
         }
 
-        // Load tất cả sản phẩm
+        // Load sản phẩm với filter từ backend
         async function loadAllProducts() {
+            applyFilters(); // Gọi applyFilters thay vì load trực tiếp
+        }
+
+        // Áp dụng bộ lọc (sử dụng API backend)
+        async function applyFilters() {
             try {
-                const products = await API.get('/products');
+                const keyword = document.getElementById('filter-keyword').value.trim();
+                const minPrice = parseInt(document.getElementById('filter-min-price').value) || '';
+                const maxPrice = parseInt(document.getElementById('filter-max-price').value) || '';
+                const category = document.getElementById('filter-category').value;
+                const sort = document.getElementById('filter-sort').value;
+
+                // Tạo query parameters
+                const params = new URLSearchParams();
+                if (keyword) params.append('keyword', keyword);
+                if (minPrice) params.append('minPrice', minPrice);
+                if (maxPrice) params.append('maxPrice', maxPrice);
+                if (category) params.append('category', category);
+                if (sort) params.append('sort', sort);
+
+                // Gọi API với filter
+                const queryString = params.toString();
+                const url = queryString ? `/products?${queryString}` : '/products';
+                const products = await API.get(url);
+                
                 allProducts = Array.isArray(products) ? products : [];
-                applyFilters();
+                filteredProducts = [...allProducts]; // Backend đã filter và sort rồi
+
+                renderProducts();
+                updateResultCount();
             } catch (err) {
                 console.error('Load products error:', err);
                 showEmptyState();
             }
         }
-
-        // Áp dụng bộ lọc
-        function applyFilters() {
-            const keyword = document.getElementById('filter-keyword').value.toLowerCase().trim();
-            const minPrice = parseInt(document.getElementById('filter-min-price').value) || 0;
-            const maxPrice = parseInt(document.getElementById('filter-max-price').value) || Infinity;
-            const category = document.getElementById('filter-category').value;
-            const sort = document.getElementById('filter-sort').value;
-
-            // Lọc
-            filteredProducts = allProducts.filter(p => {
-                const matchKeyword = !keyword || (p.TenSP && p.TenSP.toLowerCase().includes(keyword));
-                const matchPrice = p.GiaHienThi >= minPrice && p.GiaHienThi <= maxPrice;
-                const matchCategory = !category || p.MaDanhMuc == category;
-                
-                return matchKeyword && matchPrice && matchCategory;
-            });
-
-            // Sắp xếp
-            switch(sort) {
-                case 'price-asc':
-                    filteredProducts.sort((a, b) => a.GiaHienThi - b.GiaHienThi);
-                    break;
-                case 'price-desc':
-                    filteredProducts.sort((a, b) => b.GiaHienThi - a.GiaHienThi);
-                    break;
-                case 'name-asc':
-                    filteredProducts.sort((a, b) => a.TenSP.localeCompare(b.TenSP));
-                    break;
-                case 'name-desc':
-                    filteredProducts.sort((a, b) => b.TenSP.localeCompare(a.TenSP));
-                    break;
-                default: // newest
-                    // Giữ nguyên thứ tự từ API
-                    break;
-            }
-
-            renderProducts();
-            updateResultCount();
             updateSearchDisplay();
-        }
 
         // Hiển thị sản phẩm
         function renderProducts() {
@@ -379,24 +429,25 @@
         }
 
         // Khởi tạo
-        document.addEventListener('DOMContentLoaded', () => {
-            // Load categories
-            loadCategories();
-            
-            // Load products
-            loadAllProducts();
-
-            // Check URL params
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check URL params first
             const urlParams = new URLSearchParams(window.location.search);
             const urlKeyword = urlParams.get('keyword');
             const urlCategory = urlParams.get('category');
             
+            // Load categories first
+            await loadCategories();
+            
+            // Set URL params after categories are loaded
             if (urlKeyword) {
                 document.getElementById('filter-keyword').value = urlKeyword;
             }
             if (urlCategory) {
                 document.getElementById('filter-category').value = urlCategory;
             }
+            
+            // Load products after everything is set up
+            loadAllProducts();
 
             // Auto filter khi nhấn Enter trong ô tìm kiếm
             document.getElementById('filter-keyword').addEventListener('keypress', (e) => {
@@ -404,6 +455,25 @@
                     applyFilters();
                 }
             });
+
+            // Add event listeners cho các filter controls
+            document.getElementById('filter-category').addEventListener('change', applyFilters);
+            document.getElementById('filter-sort').addEventListener('change', applyFilters);
+            document.getElementById('filter-min-price').addEventListener('input', debounce(applyFilters, 500));
+            document.getElementById('filter-max-price').addEventListener('input', debounce(applyFilters, 500));
+            
+            // Debounce function to avoid too many API calls
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
         });
     </script>
 </body>

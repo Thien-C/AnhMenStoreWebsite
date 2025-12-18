@@ -154,11 +154,24 @@ const AuthManager = {
     },
 
     switchForm(type) {
-        const formLogin = document.getElementById('form-login');
-        const formRegister = document.getElementById('form-register');
-        if (formLogin && formRegister) {
-            formLogin.classList.toggle('hidden', type !== 'login');
-            formRegister.classList.toggle('hidden', type !== 'register');
+        const forms = ['form-login', 'form-register', 'form-forgot', 'form-reset-password'];
+        forms.forEach(formId => {
+            const form = document.getElementById(formId);
+            if (form) {
+                const shouldShow = formId === `form-${type}`;
+                form.classList.toggle('hidden', !shouldShow);
+            }
+        });
+
+        // Cập nhật header text theo form
+        const headerText = document.querySelector('#auth-header p');
+        if (headerText) {
+            switch(type) {
+                case 'login': headerText.textContent = 'Đăng nhập để nhận ưu đãi'; break;
+                case 'register': headerText.textContent = 'Đăng ký để nhận ưu đãi'; break;
+                case 'forgot': headerText.textContent = 'Quên mật khẩu'; break;
+                case 'reset-password': headerText.textContent = 'Đặt lại mật khẩu'; break;
+            }
         }
     },
 
@@ -248,6 +261,73 @@ const AuthManager = {
                     this.switchForm('login');
                 } else {
                     alert(res.message);
+                }
+            });
+        }
+
+        // Form Forgot Password Submit (Gửi OTP)
+        const formForgot = document.getElementById('form-forgot');
+        if (formForgot) {
+            formForgot.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('forgot-email').value;
+                
+                try {
+                    const res = await API.post('/auth/forgot-password', { email });
+                    if (res.success) {
+                        // Lưu email để dùng cho form reset password
+                        document.getElementById('otp-email-display').textContent = `Mã OTP đã được gửi đến: ${email}`;
+                        this.switchForm('reset-password');
+                        alert('Mã OTP đã được gửi đến email của bạn!');
+                    } else {
+                        alert(res.message || 'Có lỗi xảy ra khi gửi OTP');
+                    }
+                } catch (err) {
+                    alert('Không thể gửi OTP. Vui lòng thử lại!');
+                }
+            });
+        }
+
+        // Form Reset Password Submit (Xác thực OTP và đổi mật khẩu)
+        const formResetPassword = document.getElementById('form-reset-password');
+        if (formResetPassword) {
+            formResetPassword.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('forgot-email').value;
+                const otp = document.getElementById('reset-otp').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+
+                // Validate password match
+                if (newPassword !== confirmPassword) {
+                    alert('Mật khẩu xác nhận không khớp!');
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    alert('Mật khẩu phải có ít nhất 6 ký tự!');
+                    return;
+                }
+
+                try {
+                    const res = await API.post('/auth/reset-password', {
+                        email,
+                        otp,
+                        newPassword
+                    });
+                    
+                    if (res.success) {
+                        alert('Đổi mật khẩu thành công! Vui lòng đăng nhập với mật khẩu mới.');
+                        this.switchForm('login');
+                        // Clear form
+                        formResetPassword.reset();
+                        document.getElementById('forgot-email').value = '';
+                    } else {
+                        alert(res.message || 'Mã OTP không hợp lệ hoặc đã hết hạn');
+                    }
+                } catch (err) {
+                    alert('Có lỗi xảy ra khi đổi mật khẩu. Vui lòng thử lại!');
                 }
             });
         }

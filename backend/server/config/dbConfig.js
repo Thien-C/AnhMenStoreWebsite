@@ -15,10 +15,14 @@ const config = {
     charset: 'utf8'
 };
 
+let pool = null;
+
 const connectDB = async () => {
     try {
-        let pool = await sql.connect(config);
-        console.log("✅ Database connected successfully!");
+        if (!pool) {
+            pool = await sql.connect(config);
+            console.log("✅ Database connected successfully!");
+        }
         return pool;
     } catch (err) {
         console.log("❌ Database connection failed:", err);

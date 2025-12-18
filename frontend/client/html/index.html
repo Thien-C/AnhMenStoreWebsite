@@ -142,6 +142,7 @@
                     <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90">ĐĂNG NHẬP</button>
                     <div class="flex justify-between text-sm font-semibold mt-4">
                         <a href="#" onclick="AuthManager.switchForm('register'); return false;" class="text-blue-700 hover:underline">Đăng ký mới</a>
+                        <a href="#" onclick="AuthManager.switchForm('forgot'); return false;" class="text-red-600 hover:underline">Quên mật khẩu?</a>
                     </div>
                 </form>
 
@@ -152,6 +153,33 @@
                     <input type="password" id="reg-pass" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300">
                     <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90">ĐĂNG KÝ</button>
                     <div class="text-center mt-4"><a href="#" onclick="AuthManager.switchForm('login'); return false;" class="text-blue-700 font-bold hover:underline">Quay lại đăng nhập</a></div>
+                </form>
+
+                <!-- Form Quên mật khẩu - Bước 1: Nhập email -->
+                <form id="form-forgot" class="space-y-4 hidden">
+                    <div class="text-center mb-4">
+                        <p class="text-sm text-gray-600">Nhập email của bạn để nhận mã OTP</p>
+                    </div>
+                    <input type="email" id="forgot-email" placeholder="Email đã đăng ký" class="w-full px-4 py-3 rounded-full border border-gray-300" required>
+                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-3 rounded-full hover:opacity-90">GỬI MÃ OTP</button>
+                    <div class="text-center mt-4"><a href="#" onclick="AuthManager.switchForm('login'); return false;" class="text-blue-700 font-bold hover:underline">Quay lại đăng nhập</a></div>
+                </form>
+
+                <!-- Form nhập OTP và mật khẩu mới -->
+                <form id="form-reset-password" class="space-y-4 hidden">
+                    <div class="text-center mb-4">
+                        <p class="text-sm text-gray-600">Nhập mã OTP đã gửi về email và mật khẩu mới</p>
+                        <p id="otp-email-display" class="text-sm text-blue-600 font-medium"></p>
+                    </div>
+                    <input type="text" id="reset-otp" placeholder="Mã OTP (6 số)" class="w-full px-4 py-3 rounded-full border border-gray-300" maxlength="6" required>
+                    <input type="password" id="new-password" placeholder="Mật khẩu mới" class="w-full px-4 py-3 rounded-full border border-gray-300" required>
+                    <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu mới" class="w-full px-4 py-3 rounded-full border border-gray-300" required>
+                    <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-full hover:opacity-90">ĐỔI MẬT KHẨU</button>
+                    <div class="text-center mt-4">
+                        <a href="#" onclick="AuthManager.switchForm('forgot'); return false;" class="text-blue-700 font-bold hover:underline text-sm">Gửi lại mã OTP</a>
+                        <span class="text-gray-400 mx-2">|</span>
+                        <a href="#" onclick="AuthManager.switchForm('login'); return false;" class="text-blue-700 font-bold hover:underline text-sm">Quay lại đăng nhập</a>
+                    </div>
                 </form>
             </div>
         </div>

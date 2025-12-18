@@ -90,3 +90,143 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Thêm thư viện nodemailer
+const nodemailer = require('nodemailer');
+
+// Tạo transporter cho email
+const emailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER || 'your-email@gmail.com', // Thêm vào .env
+        pass: process.env.EMAIL_PASS || 'your-app-password'     // App password của Gmail
+    }
+});
+
+// Store OTP tạm thời (production nên dùng Redis)
+const otpStorage = new Map();
+
+// API: Gửi OTP quên mật khẩu
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const pool = await connectDB();
+        const request = pool.request();
+        request.input('Email', sql.VarChar, email);
+        
+        // Kiểm tra email có tồn tại không
+        const result = await request.query('SELECT MaNguoiDung, HoTen FROM NguoiDung WHERE Email = @Email');
+        
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Email không tồn tại trong hệ thống!' 
+            });
+        }
+
+        const user = result.recordset[0];
+        
+        // Tạo mã OTP 6 số
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Lưu OTP với thời hạn 5 phút
+        otpStorage.set(email, {
+            otp,
+            userId: user.MaNguoiDung,
+            expires: Date.now() + 5 * 60 * 1000 // 5 phút
+        });
+
+        // Gửi email
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Mã OTP đặt lại mật khẩu - Anh Men Store',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #1e40af;">Anh Men Store</h2>
+                    <p>Xin chào ${user.HoTen},</p>
+                    <p>Bạn đã yêu cầu đặt lại mật khẩu. Mã OTP của bạn là:</p>
+                    <h1 style="color: #dc2626; text-align: center; font-size: 32px; letter-spacing: 4px;">${otp}</h1>
+                    <p>Mã này có hiệu lực trong <strong>5 phút</strong>.</p>
+                    <p>Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.</p>
+                    <hr>
+                    <p style="color: #666; font-size: 12px;">© 2025 Anh Men Store. All rights reserved.</p>
+                </div>
+            `
+        };
+
+        await emailTransporter.sendMail(mailOptions);
+
+        res.json({ 
+            success: true, 
+            message: 'Mã OTP đã được gửi đến email của bạn!' 
+        });
+
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Có lỗi xảy ra khi gửi email. Vui lòng thử lại!' 
+        });
+    }
+};
+
+// API: Xác thực OTP và đặt lại mật khẩu
+exports.resetPassword = async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+
+    try {
+        // Kiểm tra OTP
+        const otpData = otpStorage.get(email);
+        
+        if (!otpData) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Mã OTP không hợp lệ hoặc đã hết hạn!' 
+            });
+        }
+
+        if (otpData.expires < Date.now()) {
+            otpStorage.delete(email);
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Mã OTP đã hết hạn!' 
+            });
+        }
+
+        if (otpData.otp !== otp) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Mã OTP không đúng!' 
+            });
+        }
+
+        // Hash mật khẩu mới
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Cập nhật mật khẩu trong database
+        const pool = await connectDB();
+        const request = pool.request();
+        request.input('MatKhau', sql.VarChar, hashedPassword);
+        request.input('MaNguoiDung', sql.Int, otpData.userId);
+        
+        await request.query('UPDATE NguoiDung SET MatKhau = @MatKhau WHERE MaNguoiDung = @MaNguoiDung');
+
+        // Xóa OTP đã sử dụng
+        otpStorage.delete(email);
+
+        res.json({ 
+            success: true, 
+            message: 'Đổi mật khẩu thành công!' 
+        });
+
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Có lỗi xảy ra khi đổi mật khẩu. Vui lòng thử lại!' 
+        });
+    }
+};

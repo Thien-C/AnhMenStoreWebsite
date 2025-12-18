@@ -4,6 +4,7 @@ const { connectDB, sql } = require('../config/dbConfig');
 // API 1: Lấy danh sách sản phẩm (Có Filter, Search & Sort)
 exports.getProducts = async (req, res) => {
     try {
+        console.log('🔍 getProducts called with params:', req.query);
         const pool = await connectDB();
         const { category, keyword, sort, minPrice, maxPrice } = req.query; 
 
@@ -12,7 +13,7 @@ exports.getProducts = async (req, res) => {
         // Query cơ bản
         let query = `
             SELECT 
-                sp.MaSP, sp.TenSP, sp.TrangThai, 
+                sp.MaSP, sp.TenSP, sp.TrangThai, sp.MaDanhMuc,
                 dm.TenDanhMuc,
                 bt_dai_dien.Gia as GiaHienThi,
                 bt_dai_dien.HinhAnh as AnhDaiDien,
@@ -37,9 +38,13 @@ exports.getProducts = async (req, res) => {
             request.input('Keyword', sql.NVarChar, `%${keyword}%`);
         }
 
-        // 2. Lọc danh mục
+        // 2. Lọc danh mục (bao gồm cả danh mục con)
         if (category) {
-            query += ` AND sp.MaDanhMuc = @Category`;
+            query += ` AND (sp.MaDanhMuc = @Category OR EXISTS (
+                SELECT 1 FROM DanhMuc dm_child 
+                WHERE dm_child.MaDanhMucCha = @Category 
+                AND sp.MaDanhMuc = dm_child.MaDanhMuc
+            ))`;
             request.input('Category', sql.Int, category);
         }
 
@@ -70,6 +75,7 @@ exports.getProducts = async (req, res) => {
         }
 
         const result = await request.query(query);
+        console.log(`📦 Found ${result.recordset.length} products for query:`, { category, keyword, sort, minPrice, maxPrice });
         res.json(result.recordset);
 
     } catch (err) {
