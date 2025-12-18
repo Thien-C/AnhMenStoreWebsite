@@ -177,3 +177,76 @@ exports.getVariantsByIds = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+// API: Lấy danh mục sản phẩm
+exports.getCategories = async (req, res) => {
+    try {
+        const pool = await connectDB();
+        const result = await pool.request().query('SELECT * FROM DanhMuc');
+        res.json(result.recordset);
+    } catch (err) {
+        console.error("Lỗi lấy danh mục sản phẩm:", err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// API: Tạo sản phẩm mới (Admin)
+exports.createProductAdmin = async (req, res) => {
+    try {
+        const { tenSP, moTa, maDanhMuc, trangThai, bienThe } = req.body;
+        
+        // Validate input
+        if (!tenSP || !maDanhMuc) {
+            return res.status(400).json({ message: 'Tên sản phẩm và danh mục là bắt buộc' });
+        }
+
+        const pool = await connectDB();
+        const transaction = pool.transaction();
+        
+        await transaction.begin();
+        
+        try {
+            // 1. Tạo sản phẩm mới
+            const productResult = await transaction.request()
+                .input('TenSP', sql.NVarChar, tenSP)
+                .input('MoTa', sql.NVarChar, moTa || '')
+                .input('MaDanhMuc', sql.Int, maDanhMuc)
+                .input('TrangThai', sql.NVarChar, trangThai || 'Đang bán')
+                .query(`
+                    INSERT INTO SanPham (TenSP, MoTa, MaDanhMuc, TrangThai, NgayTao)
+                    OUTPUT INSERTED.MaSP
+                    VALUES (@TenSP, @MoTa, @MaDanhMuc, @TrangThai, GETDATE())
+                `);
+            
+            const maSP = productResult.recordset[0].MaSP;
+            
+            // 2. Tạo các biến thể (nếu có)
+            if (bienThe && Array.isArray(bienThe) && bienThe.length > 0) {
+                for (const bt of bienThe) {
+                    await transaction.request()
+                        .input('MaSP', sql.Int, maSP)
+                        .input('MaMauSac', sql.Int, bt.maMauSac)
+                        .input('MaKichCo', sql.Int, bt.maKichCo)
+                        .input('Gia', sql.Decimal, bt.gia)
+                        .input('SoLuongTon', sql.Int, bt.soLuongTon || 0)
+                        .input('HinhAnh', sql.NVarChar, bt.hinhAnh || '')
+                        .query(`
+                            INSERT INTO SanPham_BienThe (MaSP, MaMauSac, MaKichCo, Gia, SoLuongTon, HinhAnh)
+                            VALUES (@MaSP, @MaMauSac, @MaKichCo, @Gia, @SoLuongTon, @HinhAnh)
+                        `);
+                }
+            }
+            
+            await transaction.commit();
+            res.status(201).json({ message: 'Tạo sản phẩm thành công', maSP });
+            
+        } catch (err) {
+            await transaction.rollback();
+            throw err;
+        }
+        
+    } catch (err) {
+        console.error("Lỗi tạo sản phẩm:", err);
+        res.status(500).json({ message: err.message });
+    }
+};
