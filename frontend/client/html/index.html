@@ -16,6 +16,107 @@
         .color-swatch:hover, .color-swatch.active { border-color: #000; transform: scale(1.1); }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out; }
+        
+        /* Banner Slider Styles */
+        .banner-slider {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+        }
+        @media (min-width: 768px) {
+            .banner-slider { height: 600px; }
+        }
+        .banner-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .banner-slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        .banner-slide img, .banner-slide video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+        .banner-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.1));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2.5rem;
+            z-index: 2;
+        }
+        @media (min-width: 768px) {
+            .banner-overlay { padding: 5rem; }
+        }
+        .banner-text {
+            color: white;
+            max-width: 600px;
+            animation: slideInLeft 1s ease-out;
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .banner-indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 3;
+        }
+        .banner-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .banner-dot.active {
+            background: white;
+            width: 30px;
+            border-radius: 5px;
+        }
+        .banner-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 3;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .banner-nav:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        .banner-nav.prev { left: 20px; }
+        .banner-nav.next { right: 20px; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
@@ -53,13 +154,89 @@
         </div>
     </header>
 
-    <section class="relative w-full">
-        <img src="https://media.coolmate.me/cdn-cgi/image/width=1920,quality=80,format=auto/uploads/November2024/Hero-Banner-Winter-Collection-Desktop-01.jpg" 
-             alt="Banner" class="w-full h-[400px] md:h-[600px] object-cover object-top">
-        <div class="absolute inset-0 bg-black/10 flex flex-col justify-center px-10 md:px-20 text-white">
-            <h2 class="text-lg md:text-xl font-bold uppercase mb-2 tracking-widest">Fall Winter 2025</h2>
-            <h1 class="text-4xl md:text-6xl font-extrabold mb-6">ÁO GIỮ NHIỆT <br> THẾ HỆ MỚI</h1>
-            <button class="bg-white text-black font-bold py-3 px-8 rounded-full w-fit hover:bg-gray-200 transition">Khám phá ngay</button>
+    <section class="banner-slider">
+        <!-- Slide 1: Banner01.jpg -->
+        <div class="banner-slide active">
+            <img src="../asset/Banner01.jpg" alt="Banner 1">
+            <div class="banner-overlay">
+                <div class="banner-text">
+                    <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">
+                        Khám phá bộ sưu tập thời trang mới nhất
+                    </h1>
+                    <p class="text-lg md:text-2xl font-semibold mb-6">
+                        Phong cách hiện đại, giá cả phải chăng!
+                    </p>
+                    <button class="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition">
+                        Khám phá ngay
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: ecc-master-banner.mp4 -->
+        <div class="banner-slide">
+            <video src="../asset/ecc-master-banner.mp4" autoplay muted loop playsinline></video>
+            <div class="banner-overlay">
+                <div class="banner-text">
+                    <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">
+                        Đưa phong cách của bạn lên một tầm cao mới
+                    </h1>
+                    <p class="text-lg md:text-2xl font-semibold mb-6">
+                        Với những sản phẩm độc quyền từ chúng tôi!
+                    </p>
+                    <button class="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition">
+                        Xem video
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Banner02.jpg -->
+        <div class="banner-slide">
+            <img src="../asset/Banner02.jpg" alt="Banner 2">
+            <div class="banner-overlay">
+                <div class="banner-text">
+                    <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">
+                        Ưu đãi đặc biệt hôm nay!
+                    </h1>
+                    <p class="text-lg md:text-2xl font-semibold mb-6">
+                        Mua sắm ngay để nhận những ưu đãi không thể bỏ lỡ!
+                    </p>
+                    <button class="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition">
+                        Mua ngay
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Banner03.jpg -->
+        <div class="banner-slide">
+            <img src="../asset/Banner03.jpg" alt="Banner 3">
+            <div class="banner-overlay">
+                <div class="banner-text">
+                    <h1 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">
+                        Thời trang cho mọi phong cách
+                    </h1>
+                    <p class="text-lg md:text-2xl font-semibold mb-6">
+                        Đa dạng, chất lượng, và luôn cập nhật xu hướng!
+                    </p>
+                    <button class="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition">
+                        Khám phá ngay
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <button class="banner-nav prev" onclick="bannerSlider.prevSlide()">‹</button>
+        <button class="banner-nav next" onclick="bannerSlider.nextSlide()">›</button>
+
+        <!-- Indicators -->
+        <div class="banner-indicators">
+            <span class="banner-dot active" onclick="bannerSlider.goToSlide(0)"></span>
+            <span class="banner-dot" onclick="bannerSlider.goToSlide(1)"></span>
+            <span class="banner-dot" onclick="bannerSlider.goToSlide(2)"></span>
+            <span class="banner-dot" onclick="bannerSlider.goToSlide(3)"></span>
         </div>
     </section>
 
@@ -218,6 +395,63 @@
 
     <script src="../js/api.js"></script>
     <script src="../js/cart.js"></script>
-    <script src="../js/main.js"></script> 
+    <script src="../js/main.js"></script>
+    <script>
+        // Banner Slider JavaScript
+        const bannerSlider = {
+            currentSlide: 0,
+            slides: null,
+            dots: null,
+            autoPlayInterval: null,
+
+            init() {
+                this.slides = document.querySelectorAll('.banner-slide');
+                this.dots = document.querySelectorAll('.banner-dot');
+                this.startAutoPlay();
+            },
+
+            goToSlide(index) {
+                // Remove active class from current slide and dot
+                this.slides[this.currentSlide].classList.remove('active');
+                this.dots[this.currentSlide].classList.remove('active');
+
+                // Update current slide
+                this.currentSlide = index;
+
+                // Add active class to new slide and dot
+                this.slides[this.currentSlide].classList.add('active');
+                this.dots[this.currentSlide].classList.add('active');
+
+                // Reset autoplay
+                this.resetAutoPlay();
+            },
+
+            nextSlide() {
+                const next = (this.currentSlide + 1) % this.slides.length;
+                this.goToSlide(next);
+            },
+
+            prevSlide() {
+                const prev = (this.currentSlide - 1 + this.slides.length) % this.slides.length;
+                this.goToSlide(prev);
+            },
+
+            startAutoPlay() {
+                this.autoPlayInterval = setInterval(() => {
+                    this.nextSlide();
+                }, 3000); // 3 seconds
+            },
+
+            resetAutoPlay() {
+                clearInterval(this.autoPlayInterval);
+                this.startAutoPlay();
+            }
+        };
+
+        // Initialize banner slider when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            bannerSlider.init();
+        });
+    </script>
 </body>
 </html>
