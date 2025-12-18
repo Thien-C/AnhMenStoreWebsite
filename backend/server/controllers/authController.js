@@ -1,36 +1,68 @@
 const { connectDB, sql } = require('../config/dbConfig');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 
+
+
+// API: ĐĂNG KÝ
 exports.register = async (req, res) => {
-    const { HoTen, Email, SoDienThoai, MatKhau } = req.body;
-    const pool = await connectDB();
-    const transaction = new sql.Transaction(pool);
+    const { HoTen, Email, SoDienThoai, MatKhau, ConfirmMatKhau } = req.body;
 
     try {
+        // 1. Validation cơ bản
+        if (!HoTen || !Email || !SoDienThoai || !MatKhau) {
+            return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin!' });
+        }
+        // SoDienThoai chỉ chứa số và có độ dài hợp lệ
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(SoDienThoai)) {
+            return res.status(400).json({ message: 'Số điện thoại không hợp lệ!' });
+        }
+        // 2. Kiểm tra định dạng Email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(Email)) {
+            return res.status(400).json({ message: 'Email không đúng định dạng (name@example.com)!' });
+        }
+
+        // 3. Kiểm tra độ mạnh mật khẩu (>=8 ký tự, hoa, thường, số, ký tự đặc biệt)
+        const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passRegex.test(MatKhau)) {
+            return res.status(400).json({ 
+                message: 'Mật khẩu phải ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt!' 
+            });
+        }
+
+        // 4. Kiểm tra khớp mật khẩu
+        if (MatKhau !== ConfirmMatKhau) {
+            return res.status(400).json({ message: 'Mật khẩu xác nhận không khớp!' });
+        }
+
+        const pool = await connectDB();
+        const transaction = new sql.Transaction(pool);
+
         await transaction.begin();
 
-        // 1. Kiểm tra Email tồn tại
+        // 5. Kiểm tra Email tồn tại
         const checkRequest = new sql.Request(transaction);
         checkRequest.input('Email', sql.VarChar, Email);
         const checkResult = await checkRequest.query('SELECT * FROM NguoiDung WHERE Email = @Email');
         
         if (checkResult.recordset.length > 0) {
-            throw new Error('Email đã tồn tại!');
+            throw new Error('Email đã tồn tại trong hệ thống!');
         }
 
-        // 2. Hash mật khẩu
+        // 6. Hash mật khẩu
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(MatKhau, salt);
 
-        // 3. Insert NguoiDung và lấy ID vừa tạo
+        // 7. Insert người dùng
         const insertUserReq = new sql.Request(transaction);
         insertUserReq.input('HoTen', sql.NVarChar, HoTen)
                      .input('Email', sql.VarChar, Email)
                      .input('SoDienThoai', sql.VarChar, SoDienThoai)
                      .input('MatKhau', sql.VarChar, hashedPassword);
         
-        // Dùng SCOPE_IDENTITY() để lấy MaNguoiDung vừa tạo
         const userResult = await insertUserReq.query(`
             INSERT INTO NguoiDung (HoTen, Email, SoDienThoai, MatKhau) 
             VALUES (@HoTen COLLATE Vietnamese_CI_AS, @Email, @SoDienThoai, @MatKhau);
@@ -39,25 +71,35 @@ exports.register = async (req, res) => {
 
         const newUserId = userResult.recordset[0].MaNguoiDung;
 
-        // 4. Tự động tạo GioHang cho User này
+        // 8. Tạo giỏ hàng
         const insertCartReq = new sql.Request(transaction);
         insertCartReq.input('MaNguoiDung', sql.Int, newUserId);
         await insertCartReq.query('INSERT INTO GioHang (MaNguoiDung) VALUES (@MaNguoiDung)');
 
         await transaction.commit();
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.status(201).json({ message: 'Đăng ký thành công!', userId: newUserId });
 
     } catch (error) {
-        await transaction.rollback();
+        if (typeof transaction !== 'undefined') await transaction.rollback();
         res.status(500).json({ message: error.message });
     }
 };
 
+// API: ĐĂNG NHẬP
 exports.login = async (req, res) => {
     const { Email, MatKhau } = req.body;
 
     try {
+        // Validation đầu vào
+        if (!Email || !MatKhau) {
+            return res.status(400).json({ message: 'Vui lòng nhập đầy đủ Email và Mật khẩu!' });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(Email)) {
+            return res.status(400).json({ message: 'Email không đúng định dạng!' });
+        }
+
         const pool = await connectDB();
         const request = pool.request();
         request.input('Email', sql.VarChar, Email);
@@ -70,7 +112,6 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(MatKhau, user.MatKhau);
         if (!isMatch) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
 
-        // Tạo Token
         const token = jwt.sign(
             { id: user.MaNguoiDung, role: user.VaiTro },
             process.env.JWT_SECRET,
@@ -91,18 +132,15 @@ exports.login = async (req, res) => {
     }
 };
 
-// Thêm thư viện nodemailer
-const nodemailer = require('nodemailer');
 
-// Tạo transporter cho email
+// Cấu hình email transporter
 const emailTransporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER || 'your-email@gmail.com', // Thêm vào .env
-        pass: process.env.EMAIL_PASS || 'your-app-password'     // App password của Gmail
+        user: process.env.EMAIL_USER || 'your-email@gmail.com',
+        pass: process.env.EMAIL_PASS || 'your-app-password'
     }
 });
-
 // Store OTP tạm thời (production nên dùng Redis)
 const otpStorage = new Map();
 
