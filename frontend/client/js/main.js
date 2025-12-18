@@ -218,7 +218,13 @@ const AuthManager = {
                     
                     alert('Đăng nhập thành công!');
                     this.toggleModal(false);
-                    window.location.reload();
+
+                    // Nếu là Admin -> chuyển đến trang Admin
+                    if (res.user && res.user.role === 'Admin') {
+                        window.location.href = '/frontend/admin/index.html';
+                    } else {
+                        window.location.reload();
+                    }
                 } else {
                     alert(res.message || 'Lỗi đăng nhập');
                 }

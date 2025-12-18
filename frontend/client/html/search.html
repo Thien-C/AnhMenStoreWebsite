@@ -46,12 +46,105 @@
 
     <section class="container mx-auto px-4 py-8 min-h-[60vh]">
         <div class="mb-6 border-b border-gray-200 pb-4">
-            <h1 class="text-2xl md:text-3xl font-extrabold uppercase italic tracking-tighter mb-2">Kết quả tìm kiếm</h1>
-            <p id="search-keyword-display" class="text-gray-600">Đang tìm kiếm...</p>
+            <h1 class="text-2xl md:text-3xl font-extrabold uppercase italic tracking-tighter mb-2">Tìm kiếm & Lọc sản phẩm</h1>
+            <p id="search-keyword-display" class="text-gray-600">Đang tải...</p>
         </div>
         
-        <div id="search-results-container" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <!-- Bộ lọc -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar Filter -->
+            <aside class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-sm p-6 sticky top-20">
+                    <h2 class="text-lg font-bold mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        Bộ lọc
+                    </h2>
+
+                    <!-- Tìm kiếm theo tên -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2">Tìm theo tên</label>
+                        <div class="relative">
+                            <input type="text" id="filter-keyword" placeholder="Nhập tên sản phẩm..." 
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:border-blue-500">
+                            <svg class="w-5 h-5 absolute right-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Lọc theo giá -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2">Khoảng giá</label>
+                        <div class="space-y-2">
+                            <div class="flex gap-2">
+                                <input type="number" id="filter-min-price" placeholder="Từ" 
+                                    class="w-1/2 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" min="0">
+                                <input type="number" id="filter-max-price" placeholder="Đến" 
+                                    class="w-1/2 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" min="0">
+                            </div>
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                <button onclick="setQuickPrice(0, 200000)" class="text-xs px-3 py-1 border border-gray-300 rounded-full hover:bg-blue-50 hover:border-blue-500">Dưới 200k</button>
+                                <button onclick="setQuickPrice(200000, 500000)" class="text-xs px-3 py-1 border border-gray-300 rounded-full hover:bg-blue-50 hover:border-blue-500">200k - 500k</button>
+                                <button onclick="setQuickPrice(500000, 1000000)" class="text-xs px-3 py-1 border border-gray-300 rounded-full hover:bg-blue-50 hover:border-blue-500">500k - 1tr</button>
+                                <button onclick="setQuickPrice(1000000, 999999999)" class="text-xs px-3 py-1 border border-gray-300 rounded-full hover:bg-blue-50 hover:border-blue-500">Trên 1tr</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lọc theo danh mục -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2">Danh mục</label>
+                        <select id="filter-category" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="">Tất cả danh mục</option>
+                            <!-- Sẽ được load động từ API -->
+                        </select>
+                    </div>
+
+                    <!-- Sắp xếp -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2">Sắp xếp</label>
+                        <select id="filter-sort" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="newest">Mới nhất</option>
+                            <option value="price-asc">Giá: Thấp → Cao</option>
+                            <option value="price-desc">Giá: Cao → Thấp</option>
+                            <option value="name-asc">Tên: A → Z</option>
+                            <option value="name-desc">Tên: Z → A</option>
+                        </select>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-2">
+                        <button onclick="applyFilters()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
+                            Áp dụng
+                        </button>
+                        <button onclick="resetFilters()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Products Grid -->
+            <div class="lg:col-span-3">
+                <div class="mb-4 flex justify-between items-center">
+                    <p id="result-count" class="text-sm text-gray-600">Đang tải...</p>
+                    <button onclick="toggleFilterMobile()" class="lg:hidden px-4 py-2 border border-gray-300 rounded-lg flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        Lọc
+                    </button>
+                </div>
+                
+                <div id="search-results-container" class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                    <!-- Products will be loaded here -->
+                </div>
+
+                <!-- Empty state -->
+                <div id="empty-state" class="hidden text-center py-16">
+                    <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <h3 class="text-xl font-bold text-gray-700 mb-2">Không tìm thấy sản phẩm</h3>
+                    <p class="text-gray-500 mb-4">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                    <button onclick="resetFilters()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Xóa bộ lọc</button>
+                </div>
             </div>
+        </div>
     </section>
 
     <footer class="bg-white border-t border-gray-200 pt-10 pb-8 mt-12 text-gray-700 text-sm">
@@ -105,8 +198,213 @@
             </div>
         </div>
     </footer>
-    <script src="../js/cart.js"></script>
+    
     <script src="../js/api.js"></script>
     <script src="../js/cart.js"></script>
-    <script src="../js/main.js"></script> </body>
+    <script src="../js/main.js"></script>
+    <script>
+        // === FILTER LOGIC ===
+        let allProducts = [];
+        let filteredProducts = [];
+
+        // Hàm fix path ảnh
+        function fixImgPath(path) {
+            if (!path) return '../asset/placeholder.jpg';
+            if (path.startsWith('http')) return path;
+            if (path.startsWith('../')) return path;
+            if (path.startsWith('asset/')) return '../' + path;
+            return path;
+        }
+
+        // Hàm set nhanh khoảng giá
+        function setQuickPrice(min, max) {
+            document.getElementById('filter-min-price').value = min;
+            document.getElementById('filter-max-price').value = max === 999999999 ? '' : max;
+        }
+
+        // Toggle filter cho mobile
+        function toggleFilterMobile() {
+            const sidebar = document.querySelector('aside');
+            sidebar.classList.toggle('hidden');
+        }
+
+        // Load danh mục
+        async function loadCategories() {
+            try {
+                const categories = await API.get('/products/categories');
+                const select = document.getElementById('filter-category');
+                
+                if (Array.isArray(categories)) {
+                    categories.forEach(cat => {
+                        const option = document.createElement('option');
+                        option.value = cat.MaDanhMuc;
+                        option.textContent = cat.TenDanhMuc;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (err) {
+                console.error('Load categories error:', err);
+            }
+        }
+
+        // Load tất cả sản phẩm
+        async function loadAllProducts() {
+            try {
+                const products = await API.get('/products');
+                allProducts = Array.isArray(products) ? products : [];
+                applyFilters();
+            } catch (err) {
+                console.error('Load products error:', err);
+                showEmptyState();
+            }
+        }
+
+        // Áp dụng bộ lọc
+        function applyFilters() {
+            const keyword = document.getElementById('filter-keyword').value.toLowerCase().trim();
+            const minPrice = parseInt(document.getElementById('filter-min-price').value) || 0;
+            const maxPrice = parseInt(document.getElementById('filter-max-price').value) || Infinity;
+            const category = document.getElementById('filter-category').value;
+            const sort = document.getElementById('filter-sort').value;
+
+            // Lọc
+            filteredProducts = allProducts.filter(p => {
+                const matchKeyword = !keyword || (p.TenSP && p.TenSP.toLowerCase().includes(keyword));
+                const matchPrice = p.GiaHienThi >= minPrice && p.GiaHienThi <= maxPrice;
+                const matchCategory = !category || p.MaDanhMuc == category;
+                
+                return matchKeyword && matchPrice && matchCategory;
+            });
+
+            // Sắp xếp
+            switch(sort) {
+                case 'price-asc':
+                    filteredProducts.sort((a, b) => a.GiaHienThi - b.GiaHienThi);
+                    break;
+                case 'price-desc':
+                    filteredProducts.sort((a, b) => b.GiaHienThi - a.GiaHienThi);
+                    break;
+                case 'name-asc':
+                    filteredProducts.sort((a, b) => a.TenSP.localeCompare(b.TenSP));
+                    break;
+                case 'name-desc':
+                    filteredProducts.sort((a, b) => b.TenSP.localeCompare(a.TenSP));
+                    break;
+                default: // newest
+                    // Giữ nguyên thứ tự từ API
+                    break;
+            }
+
+            renderProducts();
+            updateResultCount();
+            updateSearchDisplay();
+        }
+
+        // Hiển thị sản phẩm
+        function renderProducts() {
+            const container = document.getElementById('search-results-container');
+            const emptyState = document.getElementById('empty-state');
+
+            if (filteredProducts.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            container.innerHTML = filteredProducts.map(p => {
+                const img = fixImgPath(p.AnhDaiDien);
+                const price = new Intl.NumberFormat('vi-VN').format(p.GiaHienThi || 0);
+                
+                return `
+                    <div class="product-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition cursor-pointer" onclick="window.location.href='product-detail.html?id=${p.MaSP}'">
+                        <div class="relative aspect-[3/4] overflow-hidden bg-gray-100">
+                            <img src="${img}" alt="${p.TenSP}" class="product-img w-full h-full object-cover" onerror="this.src='../asset/placeholder.jpg'">
+                        </div>
+                        <div class="p-3">
+                            <div class="text-xs text-gray-500 mb-1">${p.TenDanhMuc || 'Sản phẩm'}</div>
+                            <h3 class="font-bold text-sm md:text-base mb-2 line-clamp-2">${p.TenSP}</h3>
+                            <div class="flex items-center justify-between">
+                                <span class="text-blue-600 font-bold text-lg">${price}₫</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Cập nhật số lượng kết quả
+        function updateResultCount() {
+            const countEl = document.getElementById('result-count');
+            countEl.textContent = `Tìm thấy ${filteredProducts.length} sản phẩm`;
+        }
+
+        // Cập nhật thông báo tìm kiếm
+        function updateSearchDisplay() {
+            const displayEl = document.getElementById('search-keyword-display');
+            const keyword = document.getElementById('filter-keyword').value;
+            const minPrice = document.getElementById('filter-min-price').value;
+            const maxPrice = document.getElementById('filter-max-price').value;
+            const category = document.getElementById('filter-category');
+            const categoryText = category.options[category.selectedIndex].text;
+
+            let parts = [];
+            if (keyword) parts.push(`"${keyword}"`);
+            if (minPrice || maxPrice) {
+                const priceRange = `${minPrice ? new Intl.NumberFormat('vi-VN').format(minPrice) + '₫' : '0₫'} - ${maxPrice ? new Intl.NumberFormat('vi-VN').format(maxPrice) + '₫' : '∞'}`;
+                parts.push(`Giá: ${priceRange}`);
+            }
+            if (category.value) parts.push(`Danh mục: ${categoryText}`);
+
+            displayEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Tất cả sản phẩm';
+        }
+
+        // Reset bộ lọc
+        function resetFilters() {
+            document.getElementById('filter-keyword').value = '';
+            document.getElementById('filter-min-price').value = '';
+            document.getElementById('filter-max-price').value = '';
+            document.getElementById('filter-category').value = '';
+            document.getElementById('filter-sort').value = 'newest';
+            applyFilters();
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            document.getElementById('search-results-container').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+            document.getElementById('result-count').textContent = 'Không có sản phẩm';
+        }
+
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load categories
+            loadCategories();
+            
+            // Load products
+            loadAllProducts();
+
+            // Check URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlKeyword = urlParams.get('keyword');
+            const urlCategory = urlParams.get('category');
+            
+            if (urlKeyword) {
+                document.getElementById('filter-keyword').value = urlKeyword;
+            }
+            if (urlCategory) {
+                document.getElementById('filter-category').value = urlCategory;
+            }
+
+            // Auto filter khi nhấn Enter trong ô tìm kiếm
+            document.getElementById('filter-keyword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+        });
+    </script>
+</body>
 </html>

@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
         // Dùng SCOPE_IDENTITY() để lấy MaNguoiDung vừa tạo
         const userResult = await insertUserReq.query(`
             INSERT INTO NguoiDung (HoTen, Email, SoDienThoai, MatKhau) 
-            VALUES (@HoTen, @Email, @SoDienThoai, @MatKhau);
+            VALUES (@HoTen COLLATE Vietnamese_CI_AS, @Email, @SoDienThoai, @MatKhau);
             SELECT SCOPE_IDENTITY() AS MaNguoiDung;
         `);
 
@@ -45,6 +45,7 @@ exports.register = async (req, res) => {
         await insertCartReq.query('INSERT INTO GioHang (MaNguoiDung) VALUES (@MaNguoiDung)');
 
         await transaction.commit();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.status(201).json({ message: 'Đăng ký thành công!', userId: newUserId });
 
     } catch (error) {

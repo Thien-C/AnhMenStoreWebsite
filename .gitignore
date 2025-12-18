@@ -11,3 +11,6 @@ backend/.env
 *.log
 .DS_Store
 Thumbs.db
+
+# Bỏ qua các file Markdown (tài liệu)
+*.md

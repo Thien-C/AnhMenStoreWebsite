@@ -59,10 +59,11 @@ exports.addAddress = async (req, res) => {
         
         await insertReq.query(`
             INSERT INTO SoDiaChi (MaNguoiDung, HoTenNguoiNhan, SoDienThoai, DiaChiChiTiet, LaMacDinh)
-            VALUES (@UserId, @Name, @Phone, @Addr, @IsDefault)
+            VALUES (@UserId, @Name COLLATE Vietnamese_CI_AS, @Phone, @Addr COLLATE Vietnamese_CI_AS, @IsDefault)
         `);
 
         await transaction.commit();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.json({ message: 'Thêm địa chỉ thành công' });
 
     } catch (err) {
@@ -248,10 +249,11 @@ exports.cancelOrder = async (req, res) => {
             throw new Error('Chỉ có thể hủy đơn hàng đang chờ xác nhận!');
         }
 
-        // 2. Cập nhật trạng thái đơn hàng
+        // 2. Cập nhật trạng thái đơn hàng với COLLATE
         const updateReq = new sql.Request(transaction);
-        updateReq.input('Id', sql.Int, id);
-        await updateReq.query("UPDATE DonHang SET TrangThai = N'Đã hủy' WHERE MaDonHang = @Id");
+        updateReq.input('Id', sql.Int, id)
+                 .input('Status', sql.NVarChar, 'Đã hủy');
+        await updateReq.query("UPDATE DonHang SET TrangThai = @Status COLLATE Vietnamese_CI_AS WHERE MaDonHang = @Id");
 
         // 3. Hoàn lại tồn kho (Lấy chi tiết -> Cộng lại vào SanPham_BienThe)
         const detailReq = new sql.Request(transaction);

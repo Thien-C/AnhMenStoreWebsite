@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Anh Men Admin - Quản lý Sản phẩm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle">A</div>
+                <div class="logo-text">
+                    <span class="brand-main">Anh Men</span>
+                    <span class="brand-sub">Admin Panel</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item" data-page="dashboard-link">
+                    <span>Dashboard</span>
+                </a>
+                <a href="orders.html" class="nav-item" data-page="orders-link">
+                    <span>Quản lý Đơn hàng</span>
+                </a>
+                <a href="products.html" class="nav-item active" data-page="products-link">
+                    <span>Quản lý Sản phẩm</span>
+                </a>
+                <button id="btn-logout" class="nav-item logout">
+                    <span>Đăng xuất</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h1>Quản lý Sản phẩm</h1>
+                </div>
+                <div class="header-right">
+                    <span class="welcome-text">Xin chào, <strong id="admin-name">Admin</strong></span>
+                </div>
+            </header>
+
+            <main class="content">
+                <section class="content-page active">
+                    <h2>Thêm sản phẩm mới</h2>
+                    <p style="margin-bottom: 12px; color:#6b7280; font-size:14px;">
+                        Nhập thông tin sản phẩm và các biến thể (màu, size, giá, tồn kho).
+                    </p>
+
+                    <div class="card">
+                        <form id="product-form" class="product-form">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="TenSP">Tên sản phẩm</label>
+                                    <input type="text" id="TenSP" required placeholder="Áo Thun Basic">
+                                </div>
+                                <div class="form-group">
+                                    <label for="MaDanhMuc">Danh mục</label>
+                                    <select id="MaDanhMuc" required>
+                                        <option value="">-- Chọn danh mục --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="MoTa">Mô tả</label>
+                                <textarea id="MoTa" rows="4" placeholder="Mô tả chi tiết sản phẩm"></textarea>
+                            </div>
+
+                            <div class="variants-header">
+                                <h3>Biến thể sản phẩm</h3>
+                                <button type="button" id="btn-add-variant" class="btn-secondary">+ Thêm biến thể</button>
+                            </div>
+
+                            <div class="variants-table-wrapper">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Màu</th>
+                                            <th>Size</th>
+                                            <th>Giá</th>
+                                            <th>Tồn kho</th>
+                                            <th>Ảnh</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="variant-body">
+                                        <!-- Rows will be injected -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Tạo sản phẩm</button>
+                                <button type="reset" class="btn-ghost" id="btn-reset">Làm mới</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="../client/js/api.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/products.js"></script>
+</body>
+</html>
+
+

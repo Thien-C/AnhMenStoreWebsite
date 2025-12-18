@@ -8,8 +8,11 @@ const config = {
     database: process.env.DB_NAME,
     options: {
         encrypt: false, // true nếu dùng Azure, false nếu local
-        trustServerCertificate: true // Dev local thì để true
-    }
+        trustServerCertificate: true, // Dev local thì để true
+        enableArithAbort: true
+    },
+    // Thêm charset UTF-8 để hỗ trợ tiếng Việt
+    charset: 'utf8'
 };
 
 const connectDB = async () => {

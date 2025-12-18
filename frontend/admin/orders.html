@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Anh Men Admin - Quản lý Đơn hàng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle">A</div>
+                <div class="logo-text">
+                    <span class="brand-main">Anh Men</span>
+                    <span class="brand-sub">Admin Panel</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item" data-page="dashboard-link">
+                    <span>Dashboard</span>
+                </a>
+                <a href="orders.html" class="nav-item active" data-page="orders-link">
+                    <span>Quản lý Đơn hàng</span>
+                </a>
+                <a href="products.html" class="nav-item" data-page="products-link">
+                    <span>Quản lý Sản phẩm</span>
+                </a>
+                <button id="btn-logout" class="nav-item logout">
+                    <span>Đăng xuất</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h1>Quản lý Đơn hàng</h1>
+                </div>
+                <div class="header-right">
+                    <span class="welcome-text">Xin chào, <strong id="admin-name">Admin</strong></span>
+                </div>
+            </header>
+
+            <main class="content">
+                <section class="content-page active">
+                    <h2>Danh sách Đơn hàng</h2>
+                    <p style="margin-bottom: 12px; color:#6b7280; font-size:14px;">
+                        Xem và cập nhật trạng thái đơn hàng của khách hàng.
+                    </p>
+
+                    <div class="card">
+                        <div class="table-wrapper">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Khách hàng</th>
+                                        <th>Ngày đặt</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orders-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align:center; padding:16px;">Đang tải dữ liệu...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="../client/js/api.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/orders.js"></script>
+</body>
+</html>
+
+

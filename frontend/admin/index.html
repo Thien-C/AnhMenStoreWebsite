@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Anh Men Admin - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle">A</div>
+                <div class="logo-text">
+                    <span class="brand-main">Anh Men</span>
+                    <span class="brand-sub">Admin Panel</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-page="dashboard">
+                    <span>Dashboard</span>
+                </button>
+                <a href="orders.html" class="nav-item">
+                    <span>Quản lý Đơn hàng</span>
+                </a>
+                <a href="products.html" class="nav-item">
+                    <span>Quản lý Sản phẩm</span>
+                </a>
+                <button id="btn-logout" class="nav-item logout">
+                    <span>Đăng xuất</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h1>Trang quản trị</h1>
+                </div>
+                <div class="header-right">
+                    <span class="welcome-text">Xin chào, <strong id="admin-name">Admin</strong></span>
+                </div>
+            </header>
+
+            <main class="content">
+                <section id="page-dashboard" class="content-page active">
+                    <h2>Tổng quan hệ thống</h2>
+                    
+                    <!-- Thống kê nhanh -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 24px 0;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            <div style="font-size: 14px; opacity: 0.9;">Tổng đơn hàng</div>
+                            <div style="font-size: 32px; font-weight: bold; margin-top: 8px;" id="total-orders">0</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            <div style="font-size: 14px; opacity: 0.9;">Chờ xác nhận</div>
+                            <div style="font-size: 32px; font-weight: bold; margin-top: 8px;" id="pending-orders">0</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            <div style="font-size: 14px; opacity: 0.9;">Đang giao</div>
+                            <div style="font-size: 32px; font-weight: bold; margin-top: 8px;" id="shipping-orders">0</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            <div style="font-size: 14px; opacity: 0.9;">Hoàn thành</div>
+                            <div style="font-size: 32px; font-weight: bold; margin-top: 8px;" id="completed-orders">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Đơn hàng mới nhất -->
+                    <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-top: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 style="margin: 0; font-size: 18px;">Đơn hàng mới nhất</h3>
+                            <a href="orders.html" style="color: #667eea; text-decoration: none; font-weight: 600;">Xem tất cả →</a>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f8f9fa; text-align: left;">
+                                        <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Mã ĐH</th>
+                                        <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Khách hàng</th>
+                                        <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Ngày đặt</th>
+                                        <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Tổng tiền</th>
+                                        <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-orders-tbody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 24px; color: #6c757d;">Đang tải dữ liệu...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-orders" class="content-page">
+                    <h2>Quản lý Đơn hàng</h2>
+                    <p style="margin-bottom: 16px; color: #6c757d;">Để xem chi tiết đơn hàng, vui lòng truy cập trang <a href="orders.html" style="color: #667eea; font-weight: 600;">Quản lý Đơn hàng</a></p>
+                    <a href="orders.html" class="btn" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Đi đến Quản lý Đơn hàng →</a>
+                </section>
+
+                <section id="page-products" class="content-page">
+                    <h2>Quản lý Sản phẩm</h2>
+                    <p>Danh sách sản phẩm và chức năng CRUD sẽ được hiển thị tại đây.</p>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="../client/js/api.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
+
+

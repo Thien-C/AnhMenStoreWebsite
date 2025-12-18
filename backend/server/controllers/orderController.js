@@ -44,18 +44,19 @@ exports.createOrder = async (req, res) => {
 
         const totalAmount = cartItems.recordset.reduce((sum, item) => sum + (item.SoLuong * item.Gia), 0);
 
-        // 3. Insert DonHang (Không đổi)
+        // 3. Insert DonHang với COLLATE Vietnamese_CI_AS
         const orderReq = new sql.Request(transaction);
         orderReq.input('UserId', sql.Int, userId)
                 .input('Name', sql.NVarChar, hoTen)
                 .input('Addr', sql.NVarChar, diaChi)
                 .input('Phone', sql.VarChar, soDienThoai)
                 .input('Total', sql.Decimal, totalAmount)
-                .input('Method', sql.NVarChar, phuongThucTT);
+                .input('Method', sql.NVarChar, phuongThucTT)
+                .input('Status', sql.NVarChar, 'Chờ xác nhận');  // ✅ Thêm trạng thái mặc định
         
         const orderRes = await orderReq.query(`
-            INSERT INTO DonHang (MaNguoiDung, HoTenNguoiNhan, DiaChiGiaoHang, SoDienThoaiGiaoHang, TongTien, PhuongThucThanhToan)
-            VALUES (@UserId, @Name, @Addr, @Phone, @Total, @Method);
+            INSERT INTO DonHang (MaNguoiDung, HoTenNguoiNhan, DiaChiGiaoHang, SoDienThoaiGiaoHang, TongTien, PhuongThucThanhToan, TrangThai)
+            VALUES (@UserId, @Name COLLATE Vietnamese_CI_AS, @Addr COLLATE Vietnamese_CI_AS, @Phone, @Total, @Method COLLATE Vietnamese_CI_AS, @Status COLLATE Vietnamese_CI_AS);
             SELECT SCOPE_IDENTITY() AS MaDonHang;
         `);
         const newOrderId = orderRes.recordset[0].MaDonHang;
@@ -102,6 +103,9 @@ exports.createOrder = async (req, res) => {
         `);
 
         await transaction.commit();
+        
+        // ✅ Set charset UTF-8 cho response
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.json({ message: 'Đặt hàng thành công!', orderId: newOrderId });
 
     } catch (err) {
