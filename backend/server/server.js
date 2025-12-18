@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path');
 const adminMiddleware = require('./middleware/adminMiddleware');
 require('dotenv').config();
 
@@ -12,6 +13,7 @@ const userRoutes = require('./routes/userRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const adminOrderRoutes = require('./routes/admin/orderRoutes');
 const adminProductRoutes = require('./routes/admin/productRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 const app = express();
 
 // Middleware
@@ -34,6 +36,11 @@ app.use('/api/user', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/admin/products', adminProductRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Serve static files từ thư mục asset (cho ảnh sản phẩm)
+app.use('/asset', express.static(path.join(__dirname, '../../frontend/client/asset')));
+
 // Test Route
 app.get('/', (req, res) => {
     res.send('Anh Men Store API is running...');

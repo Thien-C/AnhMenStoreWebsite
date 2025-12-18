@@ -45,7 +45,18 @@
             </header>
 
             <main class="content">
-                <section class="content-page active">
+                <!-- Tab navigation -->
+                <div class="tabs" style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb;">
+                    <button class="tab-btn active" data-tab="add-product" style="padding: 12px 24px; background: none; border: none; border-bottom: 2px solid #2563eb; font-weight: 600; cursor: pointer; color: #2563eb;">
+                        Thêm sản phẩm mới
+                    </button>
+                    <button class="tab-btn" data-tab="list-products" style="padding: 12px 24px; background: none; border: none; border-bottom: 2px solid transparent; font-weight: 600; cursor: pointer; color: #6b7280;">
+                        Danh sách sản phẩm
+                    </button>
+                </div>
+
+                <!-- Tab: Thêm sản phẩm -->
+                <section id="tab-add-product" class="content-page active">
                     <h2>Thêm sản phẩm mới</h2>
                     <p style="margin-bottom: 12px; color:#6b7280; font-size:14px;">
                         Nhập thông tin sản phẩm và các biến thể (màu, size, giá, tồn kho).
@@ -100,7 +111,99 @@
                         </form>
                     </div>
                 </section>
+
+                <!-- Tab: Danh sách sản phẩm -->
+                <section id="tab-list-products" class="content-page" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Danh sách sản phẩm</h2>
+                        <div class="filter-group" style="display: flex; gap: 10px;">
+                            <select id="filter-category" class="form-control" style="width: 200px;">
+                                <option value="">Tất cả danh mục</option>
+                            </select>
+                            <select id="filter-status" class="form-control" style="width: 150px;">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="Còn hàng">Còn hàng</option>
+                                <option value="Hết hàng">Hết hàng</option>
+                                <option value="Ngừng bán">Ngừng bán</option>
+                            </select>
+                            <input type="text" id="search-product" class="form-control" placeholder="Tìm kiếm sản phẩm..." style="width: 250px;">
+                        </div>
+                    </div>
+
+                    <div class="table-container" style="overflow-x: auto;">
+                        <table class="table" id="products-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã SP</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Danh mục</th>
+                                    <th>Biến thể</th>
+                                    <th>Giá (đ)</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-body">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px;">
+                                        <div class="spinner"></div>
+                                        Đang tải...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="pagination" style="margin-top: 20px; display: flex; justify-content: center; gap: 5px;">
+                        <!-- Pagination buttons will be injected -->
+                    </div>
+                </section>
             </main>
+        </div>
+    </div>
+
+    <!-- Modal Edit Product -->
+    <div id="modal-edit" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Chỉnh sửa sản phẩm</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-product">
+                    <input type="hidden" id="edit-maSP">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Tên sản phẩm</label>
+                            <input type="text" id="edit-tenSP" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Danh mục</label>
+                            <select id="edit-maDanhMuc" class="form-control" required>
+                                <option value="">-- Chọn danh mục --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="edit-moTa" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Biến thể</label>
+                        <div id="edit-variants-container">
+                            <!-- Variant rows will be injected -->
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Lưu thay đổi</button>
+                        <button type="button" class="btn-ghost" onclick="closeEditModal()">Hủy</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

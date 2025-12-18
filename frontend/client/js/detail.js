@@ -28,10 +28,21 @@ async function loadProductDetail(id) {
     }
 
     // === QUAN TRỌNG: Fix lại đường dẫn ảnh trong dữ liệu ngay khi tải về ===
-    data.variants = data.variants.map(v => ({
-        ...v,
-        image: fixImgPath(v.image) // Thêm ../ vào trước
-    }));
+    data.variants = data.variants.map(v => {
+        // Parse chuỗi ảnh phân tách bằng dấu phẩy thành array
+        let images = [];
+        if (v.image && v.image.trim()) {
+            images = v.image.split(',')
+                .map(img => img.trim())
+                .filter(img => img)
+                .map(img => fixImgPath(img));
+        }
+        return {
+            ...v,
+            images: images, // Array of images
+            image: images[0] || null // First image for display
+        };
+    });
 
     productData = data;
     
@@ -54,8 +65,16 @@ function renderImageGallery(variants) {
     const mainImg = document.getElementById('main-img');
     const galleryContainer = document.getElementById('image-gallery');
     
-    // Lấy danh sách ảnh unique
-    const uniqueImages = [...new Set(variants.map(v => v.image).filter(img => img))];
+    // Lấy tất cả ảnh từ tất cả các biến thể
+    let allImages = [];
+    variants.forEach(v => {
+        if (v.images && Array.isArray(v.images)) {
+            allImages = allImages.concat(v.images);
+        }
+    });
+    
+    // Loại bỏ ảnh trùng lặp
+    const uniqueImages = [...new Set(allImages)].filter(img => img);
 
     if (uniqueImages.length > 0) {
         mainImg.src = uniqueImages[0];
