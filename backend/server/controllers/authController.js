@@ -134,13 +134,19 @@ exports.login = async (req, res) => {
 
 
 // Cấu hình email transporter
-const emailTransporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER || 'your-email@gmail.com',
-        pass: process.env.EMAIL_PASS || 'your-app-password'
-    }
-});
+let emailTransporter;
+try {
+    emailTransporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER || 'your-email@gmail.com',
+            pass: process.env.EMAIL_PASS || 'your-app-password'
+        }
+    });
+} catch (error) {
+    console.warn('⚠️ Email service not configured. OTP will be logged to console only.');
+    emailTransporter = null;
+}
 // Store OTP tạm thời (production nên dùng Redis)
 const otpStorage = new Map();
 
@@ -175,9 +181,9 @@ exports.forgotPassword = async (req, res) => {
             expires: Date.now() + 5 * 60 * 1000 // 5 phút
         });
 
-        // Gửi email
+        // Gửi email hoặc log OTP nếu email service chưa cấu hình
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: process.env.EMAIL_USER || 'noreply@anhmenstore.com',
             to: email,
             subject: 'Mã OTP đặt lại mật khẩu - Anh Men Store',
             html: `
@@ -194,12 +200,51 @@ exports.forgotPassword = async (req, res) => {
             `
         };
 
-        await emailTransporter.sendMail(mailOptions);
-
-        res.json({ 
-            success: true, 
-            message: 'Mã OTP đã được gửi đến email của bạn!' 
-        });
+        // Nếu email service chưa cấu hình, chỉ log OTP ra console
+        if (!emailTransporter || !process.env.EMAIL_USER || process.env.EMAIL_USER === 'your-email@gmail.com') {
+            console.log('╔══════════════════════════════════════════╗');
+            console.log('║          MÃ OTP QUÊN MẬT KHẨU           ║');
+            console.log('╠══════════════════════════════════════════╣');
+            console.log(`║  Email: ${email.padEnd(33, ' ')}║`);
+            console.log(`║  OTP:   ${otp.padEnd(33, ' ')}║`);
+            console.log(`║  User:  ${user.HoTen.padEnd(33, ' ')}║`);
+            console.log('║  Hiệu lực: 5 phút                        ║');
+            console.log('╚══════════════════════════════════════════╝');
+            
+            res.json({ 
+                success: true, 
+                message: 'Mã OTP đã được tạo! (Kiểm tra console server để lấy mã)',
+                devMode: true,
+                otp: otp // CHỈ TRẢ VỀ OTP KHI CHƯA CẤU HÌNH EMAIL (DEV MODE)
+            });
+        } else {
+            // Gửi email thực
+            try {
+                await emailTransporter.sendMail(mailOptions);
+                console.log(`✅ OTP đã gửi đến email: ${email}`);
+                
+                res.json({ 
+                    success: true, 
+                    message: 'Mã OTP đã được gửi đến email của bạn!' 
+                });
+            } catch (emailError) {
+                console.error('❌ Lỗi gửi email:', emailError);
+                // Vẫn log OTP ra console để user có thể test
+                console.log('╔══════════════════════════════════════════╗');
+                console.log('║     MÃ OTP (Email gửi thất bại)         ║');
+                console.log('╠══════════════════════════════════════════╣');
+                console.log(`║  Email: ${email.padEnd(33, ' ')}║`);
+                console.log(`║  OTP:   ${otp.padEnd(33, ' ')}║`);
+                console.log('╚══════════════════════════════════════════╝');
+                
+                res.json({ 
+                    success: true, 
+                    message: 'Email service chưa sẵn sàng. Mã OTP đã được tạo (kiểm tra console server)',
+                    devMode: true,
+                    otp: otp
+                });
+            }
+        }
 
     } catch (error) {
         console.error('Forgot password error:', error);

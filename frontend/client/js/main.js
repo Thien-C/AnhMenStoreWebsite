@@ -418,12 +418,19 @@ const AuthManager = {
                         // Lưu email để dùng cho form reset password
                         document.getElementById('otp-email-display').textContent = `Mã OTP đã được gửi đến: ${email}`;
                         this.switchForm('reset-password');
-                        alert('Mã OTP đã được gửi đến email của bạn!');
+                        
+                        // Nếu ở dev mode (email chưa cấu hình), hiển thị OTP
+                        if (res.devMode && res.otp) {
+                            alert(`✅ ${res.message}\n\n🔐 MÃ OTP: ${res.otp}\n\n(Mã này chỉ hiển thị vì email service chưa được cấu hình)`);
+                        } else {
+                            alert('✅ Mã OTP đã được gửi đến email của bạn!');
+                        }
                     } else {
                         alert(res.message || 'Có lỗi xảy ra khi gửi OTP');
                     }
                 } catch (err) {
-                    alert('Không thể gửi OTP. Vui lòng thử lại!');
+                    console.error('Forgot password error:', err);
+                    alert('❌ Không thể gửi OTP. Vui lòng kiểm tra email và thử lại!');
                 }
             });
         }
