@@ -369,12 +369,69 @@ async function loadProducts() {
         
         const categoryFilter = document.getElementById('filter-category')?.value;
         if (categoryFilter) {
-            filtered = filtered.filter(p => p.MaDanhMuc == categoryFilter);
+            // Lọc theo danh mục cha và con
+            const selectedCategoryId = parseInt(categoryFilter);
+            console.log('🔍 Category Filter:', {
+                selectedCategoryId,
+                categories: masterData.categories,
+                allProducts: allProducts.map(p => ({ MaSP: p.MaSP, TenSP: p.TenSP, MaDanhMuc: p.MaDanhMuc }))
+            });
+            
+            filtered = filtered.filter(p => {
+                // Kiểm tra nếu sản phẩm thuộc danh mục được chọn trực tiếp
+                if (p.MaDanhMuc == selectedCategoryId) {
+                    return true;
+                }
+                // Kiểm tra nếu danh mục của sản phẩm là con của danh mục được chọn
+                const productCategory = masterData.categories.find(c => c.MaDanhMuc == p.MaDanhMuc);
+                const isChildCategory = productCategory && productCategory.MaDanhMucCha == selectedCategoryId;
+                
+                if (isChildCategory) {
+                    console.log(`✅ Product ${p.TenSP} matches: category ${productCategory.TenDanhMuc} is child of selected category`);
+                }
+                
+                return isChildCategory;
+            });
         }
         
         const statusFilter = document.getElementById('filter-status')?.value;
         if (statusFilter) {
-            filtered = filtered.filter(p => p.TrangThai === statusFilter);
+            console.log('🔍 Status Filter:', {
+                statusFilter,
+                productsWithStatus: allProducts.map(p => ({ 
+                    MaSP: p.MaSP, 
+                    TenSP: p.TenSP, 
+                    TrangThai: p.TrangThai, 
+                    TongTonKho: p.TongTonKho 
+                }))
+            });
+            
+            filtered = filtered.filter(p => {
+                // Chuẩn hóa trạng thái để so sánh
+                let productStatus = p.TrangThai;
+                let matches = false;
+                
+                // Xử lý trường hợp "Còn hàng" - kiểm tra cả "Đang bán" và tồn kho > 0
+                if (statusFilter === 'Còn hàng') {
+                    matches = (productStatus === 'Đang bán' || productStatus === 'Còn hàng') && 
+                             (p.TongTonKho === null || p.TongTonKho > 0);
+                }
+                // Xử lý trường hợp "Hết hàng"
+                else if (statusFilter === 'Hết hàng') {
+                    matches = productStatus === 'Hết hàng' || 
+                             (p.TongTonKho !== null && p.TongTonKho === 0);
+                }
+                // Xử lý các trạng thái khác
+                else {
+                    matches = productStatus === statusFilter;
+                }
+                
+                if (matches) {
+                    console.log(`✅ Product ${p.TenSP} matches status filter: ${productStatus} (stock: ${p.TongTonKho})`);
+                }
+                
+                return matches;
+            });
         }
         
         totalProducts = filtered.length;
@@ -420,12 +477,17 @@ function renderProductTable(products) {
         const priceRange = minPrice === maxPrice ? minPrice : `${minPrice} - ${maxPrice}`;
         
         let statusBadge = '';
-        if (p.TrangThai === 'Còn hàng' || p.TrangThai === 'Đang bán') {
+        // Logic hiển thị trạng thái khớp với logic lọc
+        if ((p.TrangThai === 'Đang bán' || p.TrangThai === 'Còn hàng') && 
+            (p.TongTonKho === null || p.TongTonKho > 0)) {
             statusBadge = '<span class="badge badge-success">Còn hàng</span>';
-        } else if (p.TrangThai === 'Hết hàng') {
+        } else if (p.TrangThai === 'Hết hàng' || 
+                  (p.TongTonKho !== null && p.TongTonKho === 0)) {
             statusBadge = '<span class="badge badge-warning">Hết hàng</span>';
-        } else {
+        } else if (p.TrangThai === 'Ngừng bán') {
             statusBadge = '<span class="badge badge-danger">Ngừng bán</span>';
+        } else {
+            statusBadge = '<span class="badge badge-secondary">' + p.TrangThai + '</span>';
         }
         
         return `
