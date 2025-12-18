@@ -4,10 +4,12 @@ let filteredProducts = [];
 
 // Hàm fix path ảnh
 function fixImgPath(path) {
-    if (!path) return '../asset/placeholder.jpg';
+    if (!path || path === '') return 'https://via.placeholder.com/300x400?text=No+Image';
     if (path.startsWith('http')) return path;
+    if (path.startsWith('/asset/')) return '..' + path; // /asset/xyz.jpg -> ../asset/xyz.jpg
+    if (path.startsWith('asset/')) return '../' + path; // asset/xyz.jpg -> ../asset/xyz.jpg
     if (path.startsWith('../')) return path;
-    if (path.startsWith('asset/')) return '../' + path;
+    if (path.startsWith('uploads/')) return '../../backend/' + path;
     return path;
 }
 
@@ -65,8 +67,12 @@ async function applyFilters() {
         if (category) params.append('category', category);
         if (sort) params.append('sort', sort);
 
-        // Gọi API với filter
+        // Cập nhật URL với query parameters
         const queryString = params.toString();
+        const newUrl = queryString ? `search.html?${queryString}` : 'search.html';
+        window.history.pushState({}, '', newUrl);
+
+        // Gọi API với filter
         const url = queryString ? `/products?${queryString}` : '/products';
         const products = await API.get(url);
         
@@ -103,7 +109,7 @@ function renderProducts() {
         return `
             <div class="product-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition cursor-pointer" onclick="window.location.href='product-detail.html?id=${p.MaSP}'">
                 <div class="relative aspect-[3/4] overflow-hidden bg-gray-100">
-                    <img src="${img}" alt="${p.TenSP}" class="product-img w-full h-full object-cover" onerror="this.src='../asset/placeholder.jpg'">
+                    <img src="${img}" alt="${p.TenSP}" class="product-img w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'">
                 </div>
                 <div class="p-3">
                     <div class="text-xs text-gray-500 mb-1">${p.TenDanhMuc || 'Sản phẩm'}</div>

@@ -2,8 +2,12 @@
 
 // === PHẦN 1: TIỆN ÍCH & LOGIC SẢN PHẨM (GIỮ NGUYÊN) ===
 function fixImgPath(path) {
-    if (!path) return 'https://via.placeholder.com/300x400';
-    if (path.startsWith('http') || path.startsWith('../')) return path;
+    if (!path || path === '') return 'https://via.placeholder.com/300x400?text=No+Image';
+    if (path.startsWith('http')) return path;
+    if (path.startsWith('/asset/')) return '..' + path; // /asset/xyz.jpg -> ../asset/xyz.jpg
+    if (path.startsWith('asset/')) return '../' + path; // asset/xyz.jpg -> ../asset/xyz.jpg  
+    if (path.startsWith('../')) return path;
+    if (path.startsWith('uploads/')) return '../../backend/' + path;
     return '../' + path; 
 }
 
@@ -45,22 +49,92 @@ async function addQuickToCart(variantId) {
     if(typeof CartManager !== 'undefined') await CartManager.addToCart(variantId, 1);
 }
 
+// Object lưu trữ trạng thái xoay vòng cho từng danh mục
+const categoryRotation = {
+    ao: { currentIndex: 0, allProducts: [], intervalId: null },
+    quan: { currentIndex: 0, allProducts: [], intervalId: null },
+    phukien: { currentIndex: 0, allProducts: [], intervalId: null }
+};
+
+// Hàm render 4 sản phẩm dựa trên index hiện tại
+function renderCategoryProducts(key, products, startIndex) {
+    const container = document.getElementById(`${key}-products`);
+    if (!container) return;
+
+    const displayProducts = products.slice(startIndex, startIndex + 4);
+    if (displayProducts.length === 0) {
+        // Quay lại đầu nếu hết sản phẩm
+        categoryRotation[key].currentIndex = 0;
+        renderCategoryProducts(key, products, 0);
+        return;
+    }
+
+    container.innerHTML = displayProducts.map(p => renderProductCard(p)).join('');
+}
+
+// Hàm bắt đầu xoay vòng sản phẩm cho một danh mục
+function startProductRotation(key, products) {
+    // Dừng interval cũ nếu có
+    if (categoryRotation[key].intervalId) {
+        clearInterval(categoryRotation[key].intervalId);
+    }
+
+    // Chỉ xoay vòng nếu có nhiều hơn 4 sản phẩm
+    if (products.length > 4) {
+        categoryRotation[key].intervalId = setInterval(() => {
+            categoryRotation[key].currentIndex += 4;
+            // Quay lại đầu nếu vượt quá
+            if (categoryRotation[key].currentIndex >= products.length) {
+                categoryRotation[key].currentIndex = 0;
+            }
+            renderCategoryProducts(key, products, categoryRotation[key].currentIndex);
+        }, 5000); // 5 giây
+    }
+}
+
 async function loadHomeData() {
-    const products = await API.get('/products');
-    const winterContainer = document.getElementById('winter-products');
-    const runningContainer = document.getElementById('running-products');
+    try {
+        // Danh mục cha: Áo = 1, Quần = 2, Phụ kiện = 3
+        const categoryIds = { ao: 1, quan: 2, phukien: 3 };
 
-    if(winterContainer) winterContainer.innerHTML = '';
-    if(runningContainer) runningContainer.innerHTML = '';
+        // Lấy sản phẩm cho từng danh mục
+        for (const [key, categoryId] of Object.entries(categoryIds)) {
+            const container = document.getElementById(`${key}-products`);
+            if (!container) continue;
 
-    if(Array.isArray(products) && products.length > 0) {
-        products.forEach((p, index) => {
-            const html = renderProductCard(p);
-            if (index < 5 && runningContainer) runningContainer.innerHTML += `<div class="w-[280px] snap-start flex-shrink-0">${html}</div>`;
-            if (winterContainer) winterContainer.innerHTML += html;
-        });
-    } else {
-        if(winterContainer) winterContainer.innerHTML = '<p class="col-span-4 text-center py-10">Chưa có sản phẩm nào.</p>';
+            try {
+                // Gọi API với category ID (backend sẽ tự động lấy cả danh mục con)
+                const products = await API.get(`/products?category=${categoryId}`);
+                
+                if (products && products.length > 0) {
+                    // Lưu tất cả sản phẩm
+                    categoryRotation[key].allProducts = products;
+                    categoryRotation[key].currentIndex = 0;
+                    
+                    // Render 4 sản phẩm đầu tiên
+                    renderCategoryProducts(key, products, 0);
+                    
+                    // Bắt đầu xoay vòng nếu có nhiều hơn 4 sản phẩm
+                    startProductRotation(key, products);
+                } else {
+                    container.innerHTML = '<p class="col-span-4 text-center py-10 text-gray-500">Chưa có sản phẩm nào.</p>';
+                }
+            } catch (error) {
+                console.error(`Lỗi tải sản phẩm danh mục ${key}:`, error);
+                container.innerHTML = '<p class="col-span-4 text-center py-10 text-red-500">Lỗi tải dữ liệu.</p>';
+            }
+
+            // Thêm sự kiện click cho nút "Xem tất cả"
+            const viewAllBtn = document.getElementById(`view-all-${key}`);
+            if (viewAllBtn) {
+                viewAllBtn.onclick = (e) => {
+                    e.preventDefault();
+                    window.location.href = `search.html?category=${categoryId}`;
+                };
+            }
+        }
+    } catch (error) {
+        console.error('Lỗi tải dữ liệu trang chủ:', error);
     }
 }
 
@@ -387,6 +461,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMenu();
     // Update Cart Badge
     if (typeof CartManager !== 'undefined') CartManager.updateBadge();
+});
+
+// Dọn dẹp intervals khi rời trang
+window.addEventListener('beforeunload', () => {
+    Object.values(categoryRotation).forEach(cat => {
+        if (cat.intervalId) clearInterval(cat.intervalId);
+    });
 });
 
 // Expose AuthManager global để gọi từ HTML nếu cần (ví dụ onclick chuyển form)
