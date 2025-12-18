@@ -4,6 +4,9 @@ const { connectDB, sql } = require('../config/dbConfig');
 exports.getProfile = async (req, res) => {
     try {
         const pool = await connectDB();
+        if (!pool) {
+            return res.status(500).json({ message: 'Database connection failed' });
+        }
         const userId = req.user.id;
 
         // Lấy thông tin user

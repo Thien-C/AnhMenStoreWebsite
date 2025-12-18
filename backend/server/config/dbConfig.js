@@ -22,6 +22,7 @@ const connectDB = async () => {
         return pool;
     } catch (err) {
         console.log("❌ Database connection failed:", err);
+        throw err; // Re-throw the error so calling functions know the connection failed
     }
 };
 

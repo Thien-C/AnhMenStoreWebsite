@@ -2,6 +2,9 @@ const { connectDB, sql } = require('../config/dbConfig');
 
 // Helper: Lấy MaGioHang của User
 async function getCartId(userId, pool) {
+    if (!pool) {
+        throw new Error('Database connection not available');
+    }
     const res = await pool.request()
         .input('MaNguoiDung', sql.Int, userId)
         .query('SELECT MaGioHang FROM GioHang WHERE MaNguoiDung = @MaNguoiDung');
@@ -12,6 +15,9 @@ async function getCartId(userId, pool) {
 exports.getCart = async (req, res) => {
     try {
         const pool = await connectDB();
+        if (!pool) {
+            return res.status(500).json({ message: 'Database connection failed' });
+        }
         const cartId = await getCartId(req.user.id, pool);
         
         if (!cartId) return res.json([]);
@@ -42,6 +48,9 @@ exports.addToCart = async (req, res) => {
     try {
         const { maBienThe, soLuong } = req.body;
         const pool = await connectDB();
+        if (!pool) {
+            return res.status(500).json({ message: 'Database connection failed' });
+        }
         const cartId = await getCartId(req.user.id, pool);
 
         // Kiểm tra tồn tại
@@ -76,6 +85,9 @@ exports.updateCartItem = async (req, res) => {
     try {
         const { maChiTietGH, soLuong } = req.body;
         const pool = await connectDB();
+        if (!pool) {
+            return res.status(500).json({ message: 'Database connection failed' });
+        }
         await pool.request()
             .input('Id', sql.Int, maChiTietGH)
             .input('Sl', sql.Int, soLuong)
@@ -90,8 +102,9 @@ exports.updateCartItem = async (req, res) => {
 exports.removeCartItem = async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await connectDB();
-        await pool.request()
+        const pool = await connectDB();        if (!pool) {
+            return res.status(500).json({ message: 'Database connection failed' });
+        }        await pool.request()
             .input('Id', sql.Int, id)
             .query('DELETE FROM ChiTietGioHang WHERE MaChiTietGH = @Id');
         res.json({ message: 'Đã xóa sản phẩm' });
@@ -107,6 +120,9 @@ exports.mergeCart = async (req, res) => {
         if (!items || items.length === 0) return res.json({ message: 'No items' });
 
         const pool = await connectDB();
+        if (!pool) {
+            return res.status(500).json({ message: 'Database connection failed' });
+        }
         const cartId = await getCartId(req.user.id, pool);
 
         for (const item of items) {
