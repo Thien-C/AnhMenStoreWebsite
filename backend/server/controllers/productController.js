@@ -211,6 +211,21 @@ exports.createProductAdmin = async (req, res) => {
             return res.status(400).json({ message: 'Tên sản phẩm và danh mục là bắt buộc' });
         }
 
+        // Validation: Kiểm tra trùng lặp biến thể (Màu + Size)
+        if (bienThe && Array.isArray(bienThe)) {
+            const variantKeys = new Set();
+            for (const bt of bienThe) {
+                const key = `${bt.maMauSac}-${bt.maKichCo}`;
+                if (variantKeys.has(key)) {
+                    return res.status(400).json({ 
+                        success: false,
+                        message: `Biến thể bị trùng lặp: Màu ${bt.maMauSac} - Size ${bt.maKichCo}. Mỗi biến thể phải là sự kết hợp duy nhất của Màu sắc và Kích cỡ.`
+                    });
+                }
+                variantKeys.add(key);
+            }
+        }
+
         const pool = await connectDB();
         const transaction = pool.transaction();
         
@@ -341,25 +356,89 @@ exports.getProductDetailAdmin = async (req, res) => {
 exports.updateProductAdmin = async (req, res) => {
     try {
         const { id } = req.params;
-        const { tenSP, moTa, maDanhMuc, trangThai } = req.body;
+        const { tenSP, moTa, maDanhMuc, trangThai, bienThe } = req.body;
+
+        // Validation: Kiểm tra trùng lặp biến thể (Màu + Size)
+        if (bienThe && Array.isArray(bienThe)) {
+            const variantKeys = new Set();
+            for (const bt of bienThe) {
+                const key = `${bt.maMauSac}-${bt.maKichCo}`;
+                if (variantKeys.has(key)) {
+                    return res.status(400).json({ 
+                        success: false,
+                        message: `Biến thể bị trùng lặp: Màu ${bt.maMauSac} - Size ${bt.maKichCo}. Mỗi biến thể phải là sự kết hợp duy nhất của Màu sắc và Kích cỡ.`
+                    });
+                }
+                variantKeys.add(key);
+            }
+        }
 
         const pool = await connectDB();
-        await pool.request()
-            .input('MaSP', sql.Int, id)
-            .input('TenSP', sql.NVarChar, tenSP)
-            .input('MoTa', sql.NVarChar, moTa || '')
-            .input('MaDanhMuc', sql.Int, maDanhMuc)
-            .input('TrangThai', sql.NVarChar, trangThai || 'Đang bán')
-            .query(`
-                UPDATE SanPham 
-                SET TenSP = @TenSP, 
-                    MoTa = @MoTa, 
-                    MaDanhMuc = @MaDanhMuc, 
-                    TrangThai = @TrangThai
-                WHERE MaSP = @MaSP
-            `);
+        const transaction = pool.transaction();
+        
+        await transaction.begin();
+        
+        try {
+            // 1. Cập nhật thông tin sản phẩm
+            await transaction.request()
+                .input('MaSP', sql.Int, id)
+                .input('TenSP', sql.NVarChar, tenSP)
+                .input('MoTa', sql.NVarChar, moTa || '')
+                .input('MaDanhMuc', sql.Int, maDanhMuc)
+                .input('TrangThai', sql.NVarChar, trangThai || 'Đang bán')
+                .query(`
+                    UPDATE SanPham 
+                    SET TenSP = @TenSP, 
+                        MoTa = @MoTa, 
+                        MaDanhMuc = @MaDanhMuc, 
+                        TrangThai = @TrangThai
+                    WHERE MaSP = @MaSP
+                `);
 
-        res.json({ success: true, message: 'Cập nhật sản phẩm thành công!' });
+            // 2. Cập nhật biến thể (nếu có)
+            if (bienThe && Array.isArray(bienThe)) {
+                for (const bt of bienThe) {
+                    if (bt.maBienThe) {
+                        // Cập nhật biến thể hiện có
+                        await transaction.request()
+                            .input('MaBienThe', sql.Int, bt.maBienThe)
+                            .input('MaMauSac', sql.Int, bt.maMauSac)
+                            .input('MaKichCo', sql.Int, bt.maKichCo)
+                            .input('Gia', sql.Decimal(18, 2), bt.gia)
+                            .input('SoLuongTon', sql.Int, bt.soLuongTon)
+                            .input('HinhAnh', sql.VarChar, bt.hinhAnh || '')
+                            .query(`
+                                UPDATE SanPham_BienThe
+                                SET MaMauSac = @MaMauSac,
+                                    MaKichCo = @MaKichCo,
+                                    Gia = @Gia,
+                                    SoLuongTon = @SoLuongTon,
+                                    HinhAnh = @HinhAnh
+                                WHERE MaBienThe = @MaBienThe
+                            `);
+                    } else {
+                        // Thêm biến thể mới
+                        await transaction.request()
+                            .input('MaSP', sql.Int, id)
+                            .input('MaMauSac', sql.Int, bt.maMauSac)
+                            .input('MaKichCo', sql.Int, bt.maKichCo)
+                            .input('Gia', sql.Decimal(18, 2), bt.gia)
+                            .input('SoLuongTon', sql.Int, bt.soLuongTon)
+                            .input('HinhAnh', sql.VarChar, bt.hinhAnh || '')
+                            .query(`
+                                INSERT INTO SanPham_BienThe (MaSP, MaMauSac, MaKichCo, Gia, SoLuongTon, HinhAnh)
+                                VALUES (@MaSP, @MaMauSac, @MaKichCo, @Gia, @SoLuongTon, @HinhAnh)
+                            `);
+                    }
+                }
+            }
+
+            await transaction.commit();
+            res.json({ success: true, message: 'Cập nhật sản phẩm thành công!' });
+        } catch (err) {
+            await transaction.rollback();
+            throw err;
+        }
     } catch (err) {
         console.error("Lỗi cập nhật sản phẩm:", err);
         res.status(500).json({ message: err.message });

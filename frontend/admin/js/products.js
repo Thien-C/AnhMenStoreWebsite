@@ -132,6 +132,19 @@ async function handleSubmitProduct(e) {
         return;
     }
 
+    // Kiểm tra trùng lặp biến thể (Màu + Size)
+    const variantKeys = new Set();
+    for (const bt of BienThe) {
+        const key = `${bt.maMauSac}-${bt.maKichCo}`;
+        if (variantKeys.has(key)) {
+            const color = masterData.colors.find(c => c.MaMauSac == bt.maMauSac);
+            const size = masterData.sizes.find(s => s.MaKichCo == bt.maKichCo);
+            alert(`Biến thể bị trùng lặp: ${color?.TenMauSac} - ${size?.TenKichCo}\nMỗi biến thể phải là sự kết hợp duy nhất của Màu sắc và Kích cỡ.`);
+            return;
+        }
+        variantKeys.add(key);
+    }
+
     const payload = {
         tenSP: TenSP,
         moTa: MoTa,
@@ -547,6 +560,7 @@ function changePage(page) {
 // === EDIT PRODUCT ===
 async function editProduct(maSP) {
     try {
+        console.log('🔍 Edit product called with MaSP:', maSP);
         const token = localStorage.getItem('token');
         const res = await fetch(`${API_BASE_URL}/api/admin/products/${maSP}`, {
             headers: {
@@ -557,6 +571,7 @@ async function editProduct(maSP) {
         if (!res.ok) throw new Error('Failed to load product detail');
         
         const data = await res.json();
+        console.log('📦 Product data received:', data);
         const product = data.product;
         
         // Fill form
@@ -574,60 +589,103 @@ async function editProduct(maSP) {
         }
         
         // Render variants
+        console.log('🎨 Rendering variants:', data.variants);
         const container = document.getElementById('edit-variants-container');
-        if (container && product.variants) {
-            container.innerHTML = product.variants.map((v, idx) => {
+        console.log('📦 Container found:', container);
+        if (container && data.variants) {
+            console.log('✅ Starting to render', data.variants.length, 'variants');
+            container.innerHTML = data.variants.map((v, idx) => {
                 const color = masterData.colors.find(c => c.MaMauSac == v.MaMauSac);
                 const size = masterData.sizes.find(s => s.MaKichCo == v.MaKichCo);
                 const colorName = color ? color.TenMauSac : 'N/A';
                 const sizeName = size ? size.TenKichCo : 'N/A';
                 
                 return `
-                    <div class="variant-edit-item" style="border: 1px solid #e5e7eb; padding: 12px; margin-bottom: 10px; border-radius: 6px;" data-mabienthe="${v.MaBienThe}">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Màu sắc</label>
-                                <select class="form-control edit-variant-color">
+                    <div class="variant-edit-item" style="border: 1px solid #e5e7eb; padding: 16px; margin-bottom: 12px; border-radius: 8px; background: #f9fafb; position: relative;" data-mabienthe="${v.MaBienThe}">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: #374151;">Biến thể #${idx + 1}: ${colorName} - ${sizeName}</h4>
+                            <button type="button" class="btn-remove-edit-variant" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;" onclick="removeEditVariant(this)">Xóa</button>
+                        </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Màu sắc <span style="color: red;">*</span></label>
+                                <select class="form-control edit-variant-color" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
                                     ${optionList(masterData.colors, 'MaMauSac', 'TenMauSac')}
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>Kích cỡ</label>
-                                <select class="form-control edit-variant-size">
+                            <div class="form-group" style="margin: 0;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Kích cỡ <span style="color: red;">*</span></label>
+                                <select class="form-control edit-variant-size" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
                                     ${optionList(masterData.sizes, 'MaKichCo', 'TenKichCo')}
                                 </select>
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Giá bán</label>
-                                <input type="number" class="form-control edit-variant-price" value="${v.GiaBan}" min="0" step="1000">
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Giá bán (đ) <span style="color: red;">*</span></label>
+                                <input type="number" class="form-control edit-variant-price" value="${v.Gia}" min="0" step="1000" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
                             </div>
-                            <div class="form-group">
-                                <label>Tồn kho</label>
-                                <input type="number" class="form-control edit-variant-stock" value="${v.SoLuongTonKho}" min="0">
+                            <div class="form-group" style="margin: 0;">
+                                <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Tồn kho</label>
+                                <input type="number" class="form-control edit-variant-stock" value="${v.SoLuongTon}" min="0" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Ảnh hiện tại</label>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px;">
-                                ${(v.HinhAnh || '').split(',').filter(Boolean).map(img => `
-                                    <div style="width: 60px; height: 60px; background: url(${API_BASE_URL}${img.trim()}) center/cover; border: 1px solid #d1d5db; border-radius: 4px;"></div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Ảnh sản phẩm</label>
+                            <div class="current-images" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                                ${(v.HinhAnh || '').split(',').filter(Boolean).map((img, imgIdx) => `
+                                    <div class="image-preview-item" style="position: relative; width: 70px; height: 70px;">
+                                        <div style="width: 100%; height: 100%; background: url(${API_BASE_URL}${img.trim()}) center/cover; border: 2px solid #d1d5db; border-radius: 6px;"></div>
+                                        <button type="button" class="btn-remove-image" onclick="removeExistingImage(this, '${img.trim()}')" style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+                                    </div>
                                 `).join('')}
                             </div>
-                            <input type="file" class="form-control edit-variant-image-file" accept="image/*" multiple>
+                            <input type="file" class="form-control edit-variant-image-file" accept="image/*" multiple style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
                             <input type="hidden" class="edit-variant-images" value="${v.HinhAnh || ''}">
+                            <div class="new-images-preview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
+                            <small style="color: #6b7280; font-size: 12px; display: block; margin-top: 4px;">Chọn nhiều ảnh để upload (tối đa 5 ảnh)</small>
                         </div>
                     </div>
                 `;
             }).join('');
             
+            // Thêm nút "Thêm biến thể mới"
+            container.innerHTML += `
+                <button type="button" class="btn-secondary" onclick="addNewEditVariant()" style="width: 100%; padding: 10px; margin-top: 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">+ Thêm biến thể mới</button>
+            `;
+            
+            console.log('✅ Variants HTML rendered');
+            
             // Set variant values
             container.querySelectorAll('.variant-edit-item').forEach((item, idx) => {
-                const variant = product.variants[idx];
+                const variant = data.variants[idx];
                 item.querySelector('.edit-variant-color').value = variant.MaMauSac;
                 item.querySelector('.edit-variant-size').value = variant.MaKichCo;
+                
+                // Bind preview event for file input
+                const fileInput = item.querySelector('.edit-variant-image-file');
+                if (fileInput) {
+                    fileInput.addEventListener('change', handleEditVariantImagePreview);
+                }
+                
+                // Bind change events for color and size to check duplicates
+                const colorSelect = item.querySelector('.edit-variant-color');
+                const sizeSelect = item.querySelector('.edit-variant-size');
+                if (colorSelect) {
+                    colorSelect.addEventListener('change', () => {
+                        updateVariantNumbering();
+                    });
+                }
+                if (sizeSelect) {
+                    sizeSelect.addEventListener('change', () => {
+                        updateVariantNumbering();
+                    });
+                }
             });
+            
+            console.log('✅ Variant values set and events bound');
+        } else {
+            console.warn('⚠️ Container or variants not found:', { container, variants: data.variants });
         }
         
         // Show modal
@@ -641,6 +699,206 @@ async function editProduct(maSP) {
 
 function closeEditModal() {
     document.getElementById('modal-edit').classList.remove('active');
+}
+
+// Remove variant from edit modal
+function removeEditVariant(button) {
+    const variantItem = button.closest('.variant-edit-item');
+    if (variantItem) {
+        const container = document.getElementById('edit-variants-container');
+        const variantCount = container.querySelectorAll('.variant-edit-item').length;
+        
+        if (variantCount <= 1) {
+            alert('Sản phẩm phải có ít nhất 1 biến thể!');
+            return;
+        }
+        
+        if (confirm('Bạn có chắc muốn xóa biến thể này?')) {
+            variantItem.remove();
+            // Update variant numbering
+            updateVariantNumbering();
+        }
+    }
+}
+
+// Remove existing image from variant
+function removeExistingImage(button, imagePath) {
+    const variantItem = button.closest('.variant-edit-item');
+    const imagesInput = variantItem.querySelector('.edit-variant-images');
+    
+    // Remove from hidden input
+    let images = imagesInput.value.split(',').filter(Boolean);
+    images = images.filter(img => img.trim() !== imagePath);
+    imagesInput.value = images.join(',');
+    
+    // Remove from UI
+    button.closest('.image-preview-item').remove();
+}
+
+// Add new variant to edit modal
+function addNewEditVariant() {
+    const container = document.getElementById('edit-variants-container');
+    const variantCount = container.querySelectorAll('.variant-edit-item').length;
+    
+    const newVariantHTML = `
+        <div class="variant-edit-item" style="border: 1px solid #e5e7eb; padding: 16px; margin-bottom: 12px; border-radius: 8px; background: #f9fafb; position: relative;" data-mabienthe="">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: #374151;">Biến thể mới #${variantCount + 1}</h4>
+                <button type="button" class="btn-remove-edit-variant" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;" onclick="removeEditVariant(this)">Xóa</button>
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Màu sắc <span style="color: red;">*</span></label>
+                    <select class="form-control edit-variant-color" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        <option value="">-- Chọn màu --</option>
+                        ${optionList(masterData.colors, 'MaMauSac', 'TenMauSac')}
+                    </select>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Kích cỡ <span style="color: red;">*</span></label>
+                    <select class="form-control edit-variant-size" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        <option value="">-- Chọn size --</option>
+                        ${optionList(masterData.sizes, 'MaKichCo', 'TenKichCo')}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Giá bán (đ) <span style="color: red;">*</span></label>
+                    <input type="number" class="form-control edit-variant-price" value="0" min="0" step="1000" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Tồn kho</label>
+                    <input type="number" class="form-control edit-variant-stock" value="0" min="0" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                </div>
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">Ảnh sản phẩm</label>
+                <div class="current-images" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;"></div>
+                <input type="file" class="form-control edit-variant-image-file" accept="image/*" multiple style="padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                <input type="hidden" class="edit-variant-images" value="">
+                <div class="new-images-preview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
+                <small style="color: #6b7280; font-size: 12px; display: block; margin-top: 4px;">Chọn nhiều ảnh để upload (tối đa 5 ảnh)</small>
+            </div>
+        </div>
+    `;
+    
+    // Insert before the "Add" button
+    const addButton = container.querySelector('button[onclick="addNewEditVariant()"]');
+    addButton.insertAdjacentHTML('beforebegin', newVariantHTML);
+    
+    // Bind preview event for the new file input
+    const newVariant = container.querySelectorAll('.variant-edit-item')[variantCount];
+    const fileInput = newVariant.querySelector('.edit-variant-image-file');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleEditVariantImagePreview);
+    }
+    
+    // Bind change events for color and size to check duplicates
+    const colorSelect = newVariant.querySelector('.edit-variant-color');
+    const sizeSelect = newVariant.querySelector('.edit-variant-size');
+    if (colorSelect) {
+        colorSelect.addEventListener('change', () => {
+            updateVariantNumbering();
+        });
+    }
+    if (sizeSelect) {
+        sizeSelect.addEventListener('change', () => {
+            updateVariantNumbering();
+        });
+    }
+}
+
+// Update variant numbering after deletion
+function updateVariantNumbering() {
+    const container = document.getElementById('edit-variants-container');
+    container.querySelectorAll('.variant-edit-item').forEach((item, idx) => {
+        const header = item.querySelector('h4');
+        if (header) {
+            const colorSelect = item.querySelector('.edit-variant-color');
+            const sizeSelect = item.querySelector('.edit-variant-size');
+            const colorText = colorSelect?.selectedOptions[0]?.text || '';
+            const sizeText = sizeSelect?.selectedOptions[0]?.text || '';
+            
+            if (colorText && sizeText && colorText !== '-- Chọn màu --' && sizeText !== '-- Chọn size --') {
+                header.textContent = `Biến thể #${idx + 1}: ${colorText} - ${sizeText}`;
+            } else {
+                header.textContent = `Biến thể #${idx + 1}`;
+            }
+        }
+    });
+    
+    // Kiểm tra trùng lặp và highlight
+    checkDuplicateVariants();
+}
+
+// Kiểm tra và highlight biến thể trùng lặp
+function checkDuplicateVariants() {
+    const container = document.getElementById('edit-variants-container');
+    if (!container) return;
+    
+    const variantItems = container.querySelectorAll('.variant-edit-item');
+    const variantMap = new Map();
+    
+    // Reset all highlights
+    variantItems.forEach(item => {
+        item.style.border = '1px solid #e5e7eb';
+    });
+    
+    // Check for duplicates
+    variantItems.forEach((item, idx) => {
+        const colorSelect = item.querySelector('.edit-variant-color');
+        const sizeSelect = item.querySelector('.edit-variant-size');
+        const color = colorSelect?.value;
+        const size = sizeSelect?.value;
+        
+        if (color && size) {
+            const key = `${color}-${size}`;
+            if (variantMap.has(key)) {
+                // Highlight both duplicates
+                item.style.border = '2px solid #ef4444';
+                const firstDuplicate = variantMap.get(key);
+                firstDuplicate.style.border = '2px solid #ef4444';
+            } else {
+                variantMap.set(key, item);
+            }
+        }
+    });
+}
+
+// Handle image preview for edit variant
+function handleEditVariantImagePreview(e) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const variantItem = e.target.closest('.variant-edit-item');
+    const previewContainer = variantItem.querySelector('.new-images-preview');
+    
+    if (previewContainer) {
+        previewContainer.innerHTML = ''; // Clear old previews
+        
+        for (let i = 0; i < Math.min(files.length, 5); i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const preview = document.createElement('div');
+                preview.style.cssText = 'width: 70px; height: 70px; background-size: cover; background-position: center; border: 2px solid #10b981; border-radius: 6px;';
+                preview.style.backgroundImage = `url(${e.target.result})`;
+                preview.title = 'Ảnh mới sẽ được upload';
+                previewContainer.appendChild(preview);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        if (files.length > 5) {
+            const moreText = document.createElement('div');
+            moreText.style.cssText = 'width: 70px; height: 70px; background: #f3f4f6; border: 2px dashed #d1d5db; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 6px; color: #6b7280;';
+            moreText.textContent = `+${files.length - 5}`;
+            previewContainer.appendChild(moreText);
+        }
+    }
 }
 
 // Handle edit form submit
@@ -670,22 +928,38 @@ document.getElementById('form-edit-product')?.addEventListener('submit', async (
         const fileInput = item.querySelector('.edit-variant-image-file');
         let hinhAnh = item.querySelector('.edit-variant-images').value; // Existing images
         
+        // Validation
+        if (!maMauSac || !maKichCo) {
+            alert('Vui lòng chọn đầy đủ màu sắc và kích cỡ cho tất cả biến thể');
+            return;
+        }
+        
+        if (!giaBan || giaBan <= 0) {
+            alert('Giá bán phải lớn hơn 0');
+            return;
+        }
+        
         // Upload new images if selected
         if (fileInput.files.length > 0) {
-            const uploadedPaths = await uploadMultipleImages(fileInput.files);
-            if (uploadedPaths && uploadedPaths.length > 0) {
-                // Append new images to existing
-                const existing = hinhAnh ? hinhAnh.split(',').filter(Boolean) : [];
-                hinhAnh = [...existing, ...uploadedPaths].join(',');
+            try {
+                const uploadedPaths = await uploadMultipleImages(fileInput.files);
+                if (uploadedPaths && uploadedPaths.length > 0) {
+                    // Append new images to existing
+                    const existing = hinhAnh ? hinhAnh.split(',').filter(Boolean) : [];
+                    hinhAnh = [...existing, ...uploadedPaths].join(',');
+                }
+            } catch (err) {
+                alert('Lỗi upload ảnh: ' + err.message);
+                return;
             }
         }
         
         bienThe.push({
             maBienThe: maBienThe ? parseInt(maBienThe) : null,
-            maMauSac,
-            maKichCo,
-            giaBan,
-            soLuongTonKho,
+            maMauSac: parseInt(maMauSac),
+            maKichCo: parseInt(maKichCo),
+            gia: giaBan,
+            soLuongTon: soLuongTonKho || 0,
             hinhAnh
         });
     }
@@ -693,6 +967,19 @@ document.getElementById('form-edit-product')?.addEventListener('submit', async (
     if (bienThe.length === 0) {
         alert('Vui lòng thêm ít nhất một biến thể');
         return;
+    }
+    
+    // Kiểm tra trùng lặp biến thể (Màu + Size)
+    const variantKeys = new Set();
+    for (const bt of bienThe) {
+        const key = `${bt.maMauSac}-${bt.maKichCo}`;
+        if (variantKeys.has(key)) {
+            const color = masterData.colors.find(c => c.MaMauSac == bt.maMauSac);
+            const size = masterData.sizes.find(s => s.MaKichCo == bt.maKichCo);
+            alert(`Biến thể bị trùng lặp: ${color?.TenMauSac} - ${size?.TenKichCo}\nMỗi biến thể phải là sự kết hợp duy nhất của Màu sắc và Kích cỡ.`);
+            return;
+        }
+        variantKeys.add(key);
     }
     
     try {
