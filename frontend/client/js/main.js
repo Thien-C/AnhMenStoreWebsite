@@ -94,17 +94,54 @@ function startProductRotation(key, products) {
 
 async function loadHomeData() {
     try {
-        // Danh mục cha: Áo = 1, Quần = 2, Phụ kiện = 3
-        const categoryIds = { ao: 1, quan: 2, phukien: 3 };
+        // Lấy danh sách danh mục từ API để tìm đúng ID
+        const categories = await API.get('/products/categories');
+        console.log('📋 All categories:', categories);
+        
+        // Tìm danh mục cha theo tên (không phụ thuộc vào ID cố định)
+        const categoryMap = {
+            ao: categories.find(c => c.TenDanhMuc === 'Áo' && !c.MaDanhMucCha),
+            quan: categories.find(c => c.TenDanhMuc === 'Quần' && !c.MaDanhMucCha),
+            phukien: categories.find(c => (c.TenDanhMuc === 'Phụ Kiện' || c.TenDanhMuc === 'Phụ kiện') && !c.MaDanhMucCha)
+        };
+        
+        console.log('🗂️ Category mapping:', {
+            ao: categoryMap.ao?.MaDanhMuc,
+            quan: categoryMap.quan?.MaDanhMuc,
+            phukien: categoryMap.phukien?.MaDanhMuc
+        });
+
+        const categoryNames = { ao: 'Áo', quan: 'Quần', phukien: 'Phụ kiện' };
 
         // Lấy sản phẩm cho từng danh mục
-        for (const [key, categoryId] of Object.entries(categoryIds)) {
+        for (const [key, category] of Object.entries(categoryMap)) {
             const container = document.getElementById(`${key}-products`);
-            if (!container) continue;
+            if (!container) {
+                console.warn(`⚠️ Container ${key}-products không tìm thấy`);
+                continue;
+            }
+
+            if (!category) {
+                console.error(`❌ Không tìm thấy danh mục "${categoryNames[key]}" trong database`);
+                container.innerHTML = '<p class="col-span-4 text-center py-10 text-red-500">Không tìm thấy danh mục.</p>';
+                continue;
+            }
+
+            const categoryId = category.MaDanhMuc;
 
             try {
                 // Gọi API với category ID (backend sẽ tự động lấy cả danh mục con)
                 const products = await API.get(`/products?category=${categoryId}`);
+                
+                console.log(`📦 Danh mục "${categoryNames[key]}" (ID: ${categoryId}):`, {
+                    count: products?.length || 0,
+                    products: products?.slice(0, 4).map(p => ({ 
+                        id: p.MaSP, 
+                        name: p.TenSP, 
+                        category: p.TenDanhMuc,
+                        categoryId: p.MaDanhMuc
+                    }))
+                });
                 
                 if (products && products.length > 0) {
                     // Lưu tất cả sản phẩm
@@ -117,10 +154,11 @@ async function loadHomeData() {
                     // Bắt đầu xoay vòng nếu có nhiều hơn 4 sản phẩm
                     startProductRotation(key, products);
                 } else {
+                    console.warn(`⚠️ Không có sản phẩm cho danh mục "${categoryNames[key]}" (ID: ${categoryId})`);
                     container.innerHTML = '<p class="col-span-4 text-center py-10 text-gray-500">Chưa có sản phẩm nào.</p>';
                 }
             } catch (error) {
-                console.error(`Lỗi tải sản phẩm danh mục ${key}:`, error);
+                console.error(`❌ Lỗi tải sản phẩm danh mục ${key}:`, error);
                 container.innerHTML = '<p class="col-span-4 text-center py-10 text-red-500">Lỗi tải dữ liệu.</p>';
             }
 
@@ -134,7 +172,7 @@ async function loadHomeData() {
             }
         }
     } catch (error) {
-        console.error('Lỗi tải dữ liệu trang chủ:', error);
+        console.error('❌ Lỗi tải dữ liệu trang chủ:', error);
     }
 }
 

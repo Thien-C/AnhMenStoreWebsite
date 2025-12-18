@@ -45,6 +45,7 @@ exports.getProducts = async (req, res) => {
 
         // 2. Lọc danh mục (bao gồm cả danh mục con)
         if (category) {
+            console.log(`🔍 Filtering by category: ${category}`);
             query += ` AND (sp.MaDanhMuc = @Category OR EXISTS (
                 SELECT 1 FROM DanhMuc dm_child 
                 WHERE dm_child.MaDanhMucCha = @Category 
@@ -81,6 +82,17 @@ exports.getProducts = async (req, res) => {
 
         const result = await request.query(query);
         console.log(`📦 Found ${result.recordset.length} products for query:`, { category, keyword, sort, minPrice, maxPrice });
+        
+        // Debug: Log chi tiết sản phẩm khi filter theo category
+        if (category && result.recordset.length > 0) {
+            console.log(`📋 Products in category ${category}:`, result.recordset.map(p => ({
+                id: p.MaSP,
+                name: p.TenSP,
+                categoryId: p.MaDanhMuc,
+                categoryName: p.TenDanhMuc
+            })));
+        }
+        
         res.json(result.recordset);
 
     } catch (err) {
