@@ -14,7 +14,11 @@ exports.register = async (req, res) => {
         if (!HoTen || !Email || !SoDienThoai || !MatKhau) {
             return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin!' });
         }
-
+        // SoDienThoai chỉ chứa số và có độ dài hợp lệ
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(SoDienThoai)) {
+            return res.status(400).json({ message: 'Số điện thoại không hợp lệ!' });
+        }
         // 2. Kiểm tra định dạng Email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(Email)) {
