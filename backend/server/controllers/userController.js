@@ -279,3 +279,82 @@ exports.cancelOrder = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+// 8. Đổi mật khẩu
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+        const bcrypt = require('bcryptjs');
+        
+        // Validate input
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Vui lòng nhập đầy đủ thông tin!' 
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Mật khẩu mới phải có ít nhất 8 ký tự!' 
+            });
+        }
+
+        // Validate độ mạnh mật khẩu
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt!' 
+            });
+        }
+
+        const pool = await connectDB();
+        
+        // 1. Lấy mật khẩu hiện tại từ database
+        const userResult = await pool.request()
+            .input('UserId', sql.Int, userId)
+            .query('SELECT MatKhau FROM NguoiDung WHERE MaNguoiDung = @UserId');
+
+        if (userResult.recordset.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Người dùng không tồn tại!' 
+            });
+        }
+
+        const user = userResult.recordset[0];
+
+        // 2. Kiểm tra mật khẩu hiện tại
+        const isMatch = await bcrypt.compare(currentPassword, user.MatKhau);
+        if (!isMatch) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Mật khẩu hiện tại không đúng!' 
+            });
+        }
+
+        // 3. Hash mật khẩu mới
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // 4. Cập nhật mật khẩu mới
+        await pool.request()
+            .input('UserId', sql.Int, userId)
+            .input('NewPassword', sql.VarChar, hashedPassword)
+            .query('UPDATE NguoiDung SET MatKhau = @NewPassword WHERE MaNguoiDung = @UserId');
+
+        res.json({ 
+            success: true, 
+            message: 'Đổi mật khẩu thành công!' 
+        });
+
+    } catch (err) {
+        console.error('Change password error:', err);
+        res.status(500).json({ 
+            success: false, 
+            message: err.message 
+        });
+    }
+};

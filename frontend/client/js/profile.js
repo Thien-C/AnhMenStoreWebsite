@@ -220,7 +220,91 @@ async function cancelOrder(orderId) {
         alert('Lỗi: ' + (err.message || 'Không thể hủy đơn hàng'));
     }
 }
-// 11. Đăng xuất
+
+// 11. Toggle hiển thị mật khẩu
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+    } else {
+        input.type = 'password';
+    }
+}
+
+// 12. Reset form đổi mật khẩu
+function resetPasswordForm() {
+    document.getElementById('form-change-password').reset();
+}
+
+// 13. Xử lý form đổi mật khẩu
+document.getElementById('form-change-password').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password-change').value;
+    const confirmPassword = document.getElementById('confirm-password-change').value;
+    
+    // Validate độ mạnh mật khẩu
+    if (newPassword.length < 8) {
+        alert('❌ Mật khẩu mới phải có ít nhất 8 ký tự!');
+        return;
+    }
+    
+    // Kiểm tra có chữ thường
+    if (!/[a-z]/.test(newPassword)) {
+        alert('❌ Mật khẩu phải có ít nhất 1 chữ cái thường (a-z)!');
+        return;
+    }
+    
+    // Kiểm tra có chữ hoa
+    if (!/[A-Z]/.test(newPassword)) {
+        alert('❌ Mật khẩu phải có ít nhất 1 chữ cái in hoa (A-Z)!');
+        return;
+    }
+    
+    // Kiểm tra có số
+    if (!/[0-9]/.test(newPassword)) {
+        alert('❌ Mật khẩu phải có ít nhất 1 chữ số (0-9)!');
+        return;
+    }
+    
+    // Kiểm tra có ký tự đặc biệt
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+        alert('❌ Mật khẩu phải có ít nhất 1 ký tự đặc biệt (!@#$%^&*(),.?":{}|<>)!');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        alert('❌ Mật khẩu xác nhận không khớp!');
+        return;
+    }
+    
+    if (currentPassword === newPassword) {
+        alert('❌ Mật khẩu mới phải khác mật khẩu hiện tại!');
+        return;
+    }
+    
+    try {
+        const res = await API.put('/user/change-password', {
+            currentPassword,
+            newPassword
+        });
+        
+        if (res.success) {
+            alert('✅ Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
+            // Đăng xuất và chuyển về trang chủ
+            localStorage.clear();
+            window.location.href = 'index.html';
+        } else {
+            alert('❌ ' + (res.message || 'Có lỗi xảy ra!'));
+        }
+    } catch (err) {
+        console.error('Change password error:', err);
+        alert('❌ ' + (err.message || 'Không thể đổi mật khẩu. Vui lòng thử lại!'));
+    }
+});
+
+// 14. Đăng xuất
 function handleLogout() {
     if(confirm('Bạn có chắc muốn đăng xuất?')) {
         localStorage.clear();

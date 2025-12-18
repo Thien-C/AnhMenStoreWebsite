@@ -12,4 +12,5 @@ router.delete('/address/:addressId', userController.deleteAddress);
 router.get('/orders', userController.getOrderHistory);
 router.put('/profile', userController.updateProfile);
 router.put('/orders/:id/cancel', userController.cancelOrder);
+router.put('/change-password', userController.changePassword);
 module.exports = router;

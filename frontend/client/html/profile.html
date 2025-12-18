@@ -59,6 +59,9 @@
                     <button onclick="switchTab('address')" class="tab-btn w-full text-left px-4 py-2 rounded font-medium hover:bg-gray-50" data-tab="address">
                         Sổ địa chỉ
                     </button>
+                    <button onclick="switchTab('password')" class="tab-btn w-full text-left px-4 py-2 rounded font-medium hover:bg-gray-50" data-tab="password">
+                        Đổi mật khẩu
+                    </button>
                     <button onclick="switchTab('orders')" class="tab-btn w-full text-left px-4 py-2 rounded font-medium hover:bg-gray-50" data-tab="orders">
                         Đơn mua
                     </button>
@@ -126,6 +129,50 @@
 
                 <div id="address-list" class="space-y-4">
                     </div>
+            </div>
+
+            <!-- Tab Đổi mật khẩu -->
+            <div id="tab-password" class="tab-content hidden bg-white rounded-xl shadow p-6 md:p-10">
+                <h2 class="text-2xl font-bold mb-6">Đổi mật khẩu</h2>
+                <form id="form-change-password" class="space-y-4 max-w-md">
+                    <div>
+                        <label class="block text-gray-600 text-sm mb-1 font-bold">Mật khẩu hiện tại</label>
+                        <div class="relative">
+                            <input type="password" id="current-password" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-black transition pr-10" required>
+                            <button type="button" onclick="togglePasswordVisibility('current-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-sm mb-1 font-bold">Mật khẩu mới</label>
+                        <div class="relative">
+                            <input type="password" id="new-password-change" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-black transition pr-10" required minlength="8">
+                            <button type="button" onclick="togglePasswordVisibility('new-password-change')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt</p>
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-sm mb-1 font-bold">Xác nhận mật khẩu mới</label>
+                        <div class="relative">
+                            <input type="password" id="confirm-password-change" class="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-black transition pr-10" required minlength="8">
+                            <button type="button" onclick="togglePasswordVisibility('confirm-password-change')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex gap-3">
+                        <button type="submit" class="bg-black text-white font-bold py-3 px-8 rounded hover:bg-gray-800 transition">
+                            ĐỔI MẬT KHẨU
+                        </button>
+                        <button type="button" onclick="resetPasswordForm()" class="border border-gray-300 text-gray-700 font-bold py-3 px-8 rounded hover:bg-gray-50 transition">
+                            HỦY
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <div id="tab-orders" class="tab-content hidden bg-white rounded-xl shadow p-6 md:p-10">
