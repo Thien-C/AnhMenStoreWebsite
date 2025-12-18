@@ -132,26 +132,57 @@
                 <button class="close-auth-modal absolute -top-4 -right-4 md:-right-10 bg-black text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-800 transition">✕</button>
                 
                 <div id="auth-header" class="mb-6 text-center">
-                     <div class="text-blue-600 font-black text-2xl mb-2 tracking-tighter">ANHMEN<span class="bg-blue-600 text-white px-1 rounded">CLUB</span></div>
-                     <p class="text-sm font-bold">Đăng nhập để nhận ưu đãi</p>
+                    <div class="text-blue-600 font-black text-2xl mb-2 tracking-tighter">ANHMEN<span class="bg-blue-600 text-white px-1 rounded">CLUB</span></div>
+                    <p class="text-sm font-bold">Tài khoản</p>
                 </div>
 
-                <form id="form-login" class="space-y-4">
-                    <input type="text" id="login-email" placeholder="Email/SĐT" class="w-full px-4 py-3 rounded-full border border-gray-300">
-                    <input type="password" id="login-password" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300">
-                    <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90">ĐĂNG NHẬP</button>
+                <form id="form-login" class="space-y-3">
+                    <div class="space-y-1">
+                        <input type="text" id="login-email" placeholder="Email" class="w-full px-4 py-3 rounded-full border border-gray-300 outline-none focus:border-blue-500 transition">
+                        <small id="error-login-email" class="text-red-500 text-xs pl-4 hidden"></small>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="relative">
+                            <input type="password" id="login-password" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300 outline-none focus:border-blue-500 transition">
+                            <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 toggle-password" data-target="login-password">👁️</button>
+                        </div>
+                        <small id="error-login-password" class="text-red-500 text-xs pl-4 hidden"></small>
+                    </div>
+                    <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90 mt-2">ĐĂNG NHẬP</button>
                     <div class="flex justify-between text-sm font-semibold mt-4">
                         <a href="#" onclick="AuthManager.switchForm('register'); return false;" class="text-blue-700 hover:underline">Đăng ký mới</a>
                         <a href="#" onclick="AuthManager.switchForm('forgot'); return false;" class="text-red-600 hover:underline">Quên mật khẩu?</a>
                     </div>
                 </form>
 
-                <form id="form-register" class="space-y-4 hidden">
-                    <input type="text" id="reg-name" placeholder="Họ tên" class="w-full px-4 py-3 rounded-full border border-gray-300">
-                    <input type="text" id="reg-phone" placeholder="Số điện thoại" class="w-full px-4 py-3 rounded-full border border-gray-300">
-                    <input type="email" id="reg-email" placeholder="Email" class="w-full px-4 py-3 rounded-full border border-gray-300">
-                    <input type="password" id="reg-pass" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300">
-                    <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90">ĐĂNG KÝ</button>
+                <form id="form-register" class="space-y-3 hidden">
+                    <div class="space-y-1">
+                        <input type="text" id="reg-name" placeholder="Họ tên" class="w-full px-4 py-3 rounded-full border border-gray-300 outline-none focus:border-blue-500 transition">
+                        <small id="error-reg-name" class="text-red-500 text-xs pl-4 hidden"></small>
+                    </div>
+                    <div class="space-y-1">
+                        <input type="text" id="reg-phone" placeholder="Số điện thoại" class="w-full px-4 py-3 rounded-full border border-gray-300 outline-none focus:border-blue-500 transition">
+                        <small id="error-reg-phone" class="text-red-500 text-xs pl-4 hidden"></small>
+                    </div>
+                    <div class="space-y-1">
+                        <input type="email" id="reg-email" placeholder="Email" class="w-full px-4 py-3 rounded-full border border-gray-300 outline-none focus:border-blue-500 transition">
+                        <small id="error-reg-email" class="text-red-500 text-xs pl-4 hidden"></small>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="relative">
+                            <input type="password" id="reg-pass" placeholder="Mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300 outline-none focus:border-blue-500 transition">
+                            <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 toggle-password" data-target="reg-pass">👁️</button>
+                        </div>
+                        <small id="error-reg-pass" class="text-red-500 text-xs pl-4 hidden"></small>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="relative">
+                            <input type="password" id="reg-confirm-pass" placeholder="Xác nhận mật khẩu" class="w-full px-4 py-3 rounded-full border border-gray-300 outline-none focus:border-blue-500 transition">
+                            <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 toggle-password" data-target="reg-confirm-pass">👁️</button>
+                        </div>
+                        <small id="error-reg-confirm-pass" class="text-red-500 text-xs pl-4 hidden"></small>
+                    </div>
+                    <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-full hover:opacity-90 mt-2">ĐĂNG KÝ</button>
                     <div class="text-center mt-4"><a href="#" onclick="AuthManager.switchForm('login'); return false;" class="text-blue-700 font-bold hover:underline">Quay lại đăng nhập</a></div>
                 </form>
 

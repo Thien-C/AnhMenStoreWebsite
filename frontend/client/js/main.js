@@ -144,12 +144,51 @@ const AuthManager = {
         this.modal = document.getElementById('auth-modal');
         this.checkLoginStatus();
         this.bindEvents();
+        this.initPasswordToggle();
+    },
+
+    // Tính năng hiện/ẩn mật khẩu
+    initPasswordToggle() {
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.onclick = () => {
+                const targetId = btn.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                if (input) {
+                    const isPass = input.type === 'password';
+                    input.type = isPass ? 'text' : 'password';
+                    btn.textContent = isPass ? '🔒' : '👁️';
+                }
+            };
+        });
+    },
+
+    // Hàm hiển thị lỗi dưới ô input
+    showError(inputId, message) {
+        const errorEl = document.getElementById(`error-${inputId}`);
+        const inputEl = document.getElementById(inputId);
+        if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+        }
+        if (inputEl) inputEl.classList.add('border-red-500');
+    },
+
+    // Hàm xóa tất cả lỗi cũ
+    clearErrors() {
+        document.querySelectorAll('[id^="error-"]').forEach(el => {
+            el.textContent = '';
+            el.classList.add('hidden');
+        });
+        document.querySelectorAll('input').forEach(el => el.classList.remove('border-red-500'));
     },
 
     toggleModal(show) {
         if (this.modal) {
             if (show) this.modal.classList.remove('hidden');
-            else this.modal.classList.add('hidden');
+            else {
+                this.modal.classList.add('hidden');
+                this.clearErrors();
+            }
         }
     },
 
@@ -157,114 +196,103 @@ const AuthManager = {
         const forms = ['form-login', 'form-register', 'form-forgot', 'form-reset-password'];
         forms.forEach(formId => {
             const form = document.getElementById(formId);
-            if (form) {
-                const shouldShow = formId === `form-${type}`;
-                form.classList.toggle('hidden', !shouldShow);
-            }
+            if (form) form.classList.toggle('hidden', formId !== `form-${type}`);
         });
-
-        // Cập nhật header text theo form
         const headerText = document.querySelector('#auth-header p');
         if (headerText) {
-            switch(type) {
-                case 'login': headerText.textContent = 'Đăng nhập để nhận ưu đãi'; break;
-                case 'register': headerText.textContent = 'Đăng ký để nhận ưu đãi'; break;
-                case 'forgot': headerText.textContent = 'Quên mật khẩu'; break;
-                case 'reset-password': headerText.textContent = 'Đặt lại mật khẩu'; break;
-            }
+            const titles = { login: 'Đăng nhập', register: 'Đăng ký', forgot: 'Quên mật khẩu', 'reset-password': 'Đặt lại mật khẩu' };
+            headerText.textContent = titles[type] || 'Tài khoản';
         }
     },
 
     checkLoginStatus() {
         const authBtn = document.getElementById('authBtn');
         const user = JSON.parse(localStorage.getItem('user'));
-        
         if (authBtn) {
             if (user) {
-                // ĐÃ ĐĂNG NHẬP: Hiện tên User + Click vào thì sang trang Profile
                 authBtn.innerHTML = `<div class="flex items-center gap-1"><span class="text-xs font-bold truncate max-w-[80px]">${user.name}</span></div>`;
-                
-                // --- SỬA ĐOẠN NÀY ---
-                authBtn.onclick = (e) => {
-                    e.preventDefault(); 
-                    // Chuyển hướng sang trang Profile thay vì logout ngay
-                    window.location.href = 'profile.html';
-                };
-                // --------------------
-
+                authBtn.onclick = (e) => { e.preventDefault(); window.location.href = 'profile.html'; };
             } else {
-                // CHƯA ĐĂNG NHẬP: Giữ nguyên logic mở Modal
-                authBtn.innerHTML = `
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                `;
-                authBtn.onclick = (e) => {
-                    e.preventDefault();
-                    this.toggleModal(true);
-                    this.switchForm('login');
-                };
+                authBtn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
+                authBtn.onclick = (e) => { e.preventDefault(); this.toggleModal(true); this.switchForm('login'); };
             }
         }
     },
 
     bindEvents() {
-        // Form Login Submit
+        const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        const validatePassword = (pass) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(pass);
+
+        // FORM ĐĂNG NHẬP
         const formLogin = document.getElementById('form-login');
         if (formLogin) {
             formLogin.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const email = document.getElementById('login-email').value;
+                this.clearErrors();
+
+                const email = document.getElementById('login-email').value.trim();
                 const pass = document.getElementById('login-password').value;
-                const res = await API.post('/auth/login', { Email: email, MatKhau: pass });
+                let hasError = false;
+
+                if (!email) { this.showError('login-email', 'Email không được để trống'); hasError = true; }
+                else if (!validateEmail(email)) { this.showError('login-email', 'Email không hợp lệ'); hasError = true; }
                 
+                if (!pass) { this.showError('login-password', 'Mật khẩu không được để trống'); hasError = true; }
+
+                if (hasError) return;
+
+                const res = await API.post('/auth/login', { Email: email, MatKhau: pass });
                 if (res.token) {
                     localStorage.setItem('token', res.token);
                     localStorage.setItem('user', JSON.stringify(res.user));
-                    
-                    // Merge giỏ hàng offline vào online nếu có
-                    const localCart = JSON.parse(localStorage.getItem('cart_items') || '[]');
-                    if (localCart.length > 0) {
-                        await API.post('/cart/merge', { items: localCart });
-                        localStorage.removeItem('cart_items');
-                    }
-                    
-                    alert('Đăng nhập thành công!');
-                    this.toggleModal(false);
-
-                    // Nếu là Admin -> chuyển đến trang Admin
-                    if (res.user && res.user.role === 'Admin') {
-                        window.location.href = '/frontend/admin/index.html';
-                    } else {
-                        window.location.reload();
-                    }
+                    window.location.reload();
                 } else {
-                    alert(res.message || 'Lỗi đăng nhập');
+                    this.showError('login-password', res.message || 'Sai email hoặc mật khẩu');
                 }
             });
         }
 
-        // Form Register Submit
+        // FORM ĐĂNG KÝ
         const formRegister = document.getElementById('form-register');
         if (formRegister) {
             formRegister.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                this.clearErrors();
+
                 const data = {
-                    HoTen: document.getElementById('reg-name').value,
-                    SoDienThoai: document.getElementById('reg-phone').value,
-                    Email: document.getElementById('reg-email').value,
-                    MatKhau: document.getElementById('reg-pass').value
+                    HoTen: document.getElementById('reg-name').value.trim(),
+                    Email: document.getElementById('reg-email').value.trim(),
+                    SoDienThoai: document.getElementById('reg-phone').value.trim(),
+                    MatKhau: document.getElementById('reg-pass').value,
+                    ConfirmMatKhau: document.getElementById('reg-confirm-pass').value
                 };
+                let hasError = false;
+
+                if (!data.HoTen) { this.showError('reg-name', 'Tên không được để trống'); hasError = true; }
+                const phoneRegex = /^[0-9]{10}$/;
+                if (!data.SoDienThoai) { this.showError('reg-phone', 'Số điện thoại không được để trống'); hasError = true; }
+                else if (!phoneRegex.test(data.SoDienThoai)) { this.showError('reg-phone', 'Số điện thoại không hợp lệ (gồm 10 chữ số)'); hasError = true; }
+                if (!validateEmail(data.Email)) { this.showError('reg-email', 'Email không hợp lệ'); hasError = true; }
+                if (!validatePassword(data.MatKhau)) { 
+                    this.showError('reg-pass', 'Mật khẩu yếu (8+ ký tự, đủ chữ hoa, thường, số, ký tự đặc biệt)'); 
+                    hasError = true; 
+                }
+                if (data.MatKhau !== data.ConfirmMatKhau) { 
+                    this.showError('reg-confirm-pass', 'Mật khẩu xác nhận không khớp'); 
+                    hasError = true; 
+                }
+
+                if (hasError) return;
+
                 const res = await API.post('/auth/register', data);
                 if (res.userId) {
-                    alert('Đăng ký thành công! Vui lòng đăng nhập.');
+                    alert('Đăng ký thành công!');
                     this.switchForm('login');
                 } else {
-                    alert(res.message);
+                    this.showError('reg-email', res.message || 'Email đã tồn tại');
                 }
             });
         }
-
         // Form Forgot Password Submit (Gửi OTP)
         const formForgot = document.getElementById('form-forgot');
         if (formForgot) {
