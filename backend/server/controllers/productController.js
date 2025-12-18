@@ -1,25 +1,25 @@
+// backend/server/controllers/productController.js
 const { connectDB, sql } = require('../config/dbConfig');
 
-// API 1: Lấy danh sách sản phẩm (Có Filter & Search)
-// API 1: Lấy danh sách sản phẩm (Có Search Keyword)
+// API 1: Lấy danh sách sản phẩm (Có Filter, Search & Sort)
 exports.getProducts = async (req, res) => {
     try {
         const pool = await connectDB();
-        const { category, keyword } = req.query; // Lấy tham số từ URL
+        const { category, keyword, sort, minPrice, maxPrice } = req.query; 
 
         const request = pool.request();
 
-        // Câu lệnh SQL cơ bản
+        // Query cơ bản
         let query = `
             SELECT 
-                sp.MaSP, sp.TenSP, sp.TrangThai, 
+                sp.MaSP, sp.TenSP, sp.TrangThai, sp.NgayTao,
                 dm.TenDanhMuc,
                 bt_dai_dien.Gia as GiaHienThi,
                 bt_dai_dien.HinhAnh as AnhDaiDien,
                 bt_dai_dien.MaBienThe
             FROM SanPham sp
             LEFT JOIN DanhMuc dm ON sp.MaDanhMuc = dm.MaDanhMuc
-            -- OUTER APPLY: Lấy biến thể đại diện (ưu tiên giá thấp nhất)
+            -- Lấy biến thể đại diện (ưu tiên giá thấp nhất)
             OUTER APPLY (
                 SELECT TOP 1 MaBienThe, Gia, HinhAnh 
                 FROM SanPham_BienThe 
@@ -29,22 +29,45 @@ exports.getProducts = async (req, res) => {
             WHERE sp.TrangThai = N'Đang bán'
         `;
 
-        // --- XỬ LÝ TÌM KIẾM (SEARCH) ---
+        // --- XỬ LÝ ĐIỀU KIỆN ---
+        
+        // 1. Tìm kiếm từ khóa
         if (keyword) {
-            // Thêm điều kiện LIKE
             query += ` AND sp.TenSP LIKE @Keyword`;
-            // Gán tham số an toàn (tránh SQL Injection)
             request.input('Keyword', sql.NVarChar, `%${keyword}%`);
         }
 
-        // --- XỬ LÝ LỌC DANH MỤC (NẾU CÓ) ---
+        // 2. Lọc danh mục
         if (category) {
             query += ` AND sp.MaDanhMuc = @Category`;
             request.input('Category', sql.Int, category);
         }
 
-        // Sắp xếp mặc định: Mới nhất lên đầu
-        query += ` ORDER BY sp.NgayTao DESC`;
+        // 3. Lọc khoảng giá [MỚI]
+        if (minPrice) {
+            query += ` AND bt_dai_dien.Gia >= @MinPrice`;
+            request.input('MinPrice', sql.Decimal, minPrice);
+        }
+        if (maxPrice) {
+            query += ` AND bt_dai_dien.Gia <= @MaxPrice`;
+            request.input('MaxPrice', sql.Decimal, maxPrice);
+        }
+
+        // --- XỬ LÝ SẮP XẾP [MỚI] ---
+        switch (sort) {
+            case 'price_asc': // Giá tăng dần
+                query += ` ORDER BY bt_dai_dien.Gia ASC`;
+                break;
+            case 'price_desc': // Giá giảm dần
+                query += ` ORDER BY bt_dai_dien.Gia DESC`;
+                break;
+            case 'oldest': // Cũ nhất
+                query += ` ORDER BY sp.NgayTao ASC`;
+                break;
+            default: // Mặc định: Mới nhất
+                query += ` ORDER BY sp.NgayTao DESC`;
+                break;
+        }
 
         const result = await request.query(query);
         res.json(result.recordset);
@@ -94,23 +117,20 @@ exports.getProductDetail = async (req, res) => {
                 WHERE bt.MaSP = @MaSP
             `);
 
-        // 3. Output JSON format
-        const responseData = {
+        res.json({
             id: productInfo.MaSP,
             name: productInfo.TenSP,
             desc: productInfo.MoTa,
             category: productInfo.TenDanhMuc,
             variants: btQuery.recordset
-        };
-
-        res.json(responseData);
+        });
 
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-// API 3: Master Data (Dữ liệu nền cho bộ lọc)
+// API 3: Master Data (Dữ liệu nền cho bộ lọc) [QUAN TRỌNG: Đây là hàm bị thiếu gây lỗi]
 exports.getMasterData = async (req, res) => {
     try {
         const pool = await connectDB();
@@ -127,16 +147,16 @@ exports.getMasterData = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 // API 4: Lấy chi tiết danh sách biến thể (Dùng cho Giỏ hàng Guest)
 exports.getVariantsByIds = async (req, res) => {
     try {
-        const { ids } = req.body; // Mảng id: [1, 2, 3]
+        const { ids } = req.body; 
         if (!ids || ids.length === 0) return res.json([]);
 
         const pool = await connectDB();
         const request = pool.request();
 
-        // Tạo tham số động cho câu query IN (...)
         const params = ids.map((id, index) => `@id${index}`).join(',');
         ids.forEach((id, index) => request.input(`id${index}`, sql.Int, id));
 
