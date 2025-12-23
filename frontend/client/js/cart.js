@@ -140,8 +140,11 @@ class CartManager {
             const updateId = this.getUser() ? item.MaChiTietGH : item.MaBienThe;
             const maxStock = item.SoLuongTon || 999;
             
-            // Fix ảnh
+            // Fix ảnh - Lấy ảnh đầu tiên từ chuỗi phân tách bằng dấu phẩy
             let imgSrc = item.HinhAnh || 'https://via.placeholder.com/100';
+            if (imgSrc.includes(',')) {
+                imgSrc = imgSrc.split(',')[0].trim();
+            }
             if (!imgSrc.startsWith('http') && !imgSrc.startsWith('../')) {
                 imgSrc = '../' + imgSrc;
             }
