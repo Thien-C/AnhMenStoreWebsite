@@ -357,7 +357,15 @@ const AuthManager = {
                 if (res.token) {
                     localStorage.setItem('token', res.token);
                     localStorage.setItem('user', JSON.stringify(res.user));
-                    window.location.reload();
+                    
+                    // Kiểm tra role và chuyển hướng
+                    if (res.user.role === 'Admin') {
+                        // Nếu là Admin, chuyển sang trang Dashboard của Admin
+                        window.location.href = '../../admin/index.html';
+                    } else {
+                        // Nếu là user thường, reload trang hiện tại
+                        window.location.reload();
+                    }
                 } else {
                     this.showError('login-password', res.message || 'Sai email hoặc mật khẩu');
                 }

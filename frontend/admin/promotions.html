@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Anh Men Admin - Quản lý Khuyến mãi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle">A</div>
+                <div class="logo-text">
+                    <span class="brand-main">Anh Men</span>
+                    <span class="brand-sub">Admin Panel</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <span>Dashboard</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span>Quản lý Đơn hàng</span>
+                </a>
+                <a href="products.html" class="nav-item">
+                    <span>Quản lý Sản phẩm</span>
+                </a>
+                <a href="promotions.html" class="nav-item active">
+                    <span>Khuyến mãi</span>
+                </a>
+                <button id="btn-logout" class="nav-item logout">
+                    <span>Đăng xuất</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main">
+            <header class="header">
+                <div class="header-left">
+                    <h1>Quản lý Khuyến mãi</h1>
+                </div>
+                <div class="header-right">
+                    <span class="welcome-text">Xin chào, <strong id="admin-name">Admin</strong></span>
+                </div>
+            </header>
+
+            <main class="content">
+                <!-- Action bar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div>
+                        <p style="color: #6c757d; margin: 0;">Quản lý mã giảm giá và chương trình khuyến mãi</p>
+                    </div>
+                    <button id="btn-create-coupon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.3s;">
+                        + Tạo khuyến mãi
+                    </button>
+                </div>
+
+                <!-- Bảng danh sách mã giảm giá -->
+                <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa; text-align: left;">
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Mã Code</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Mô tả</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Loại giảm</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Giá trị</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Đơn tối thiểu</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Số lượng</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Ngày bắt đầu</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Ngày kết thúc</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Trạng thái</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6;">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coupons-tbody">
+                                <tr>
+                                    <td colspan="10" style="text-align: center; padding: 24px; color: #6c757d;">Đang tải dữ liệu...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="coupon-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 32px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h2 id="modal-title" style="margin: 0 0 24px 0; font-size: 24px;">Tạo mã giảm giá</h2>
+            
+            <form id="coupon-form">
+                <input type="hidden" id="coupon-id" value="">
+                
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Mã Code <span style="color: red;">*</span></label>
+                    <input type="text" id="coupon-code" required style="width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px; text-transform: uppercase;" placeholder="VD: SALE50">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Mô tả</label>
+                    <textarea id="coupon-description" rows="3" style="width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px; resize: vertical;" placeholder="Mô tả chương trình khuyến mãi"></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Loại giảm <span style="color: red;">*</span></label>
+                        <select id="coupon-type" required style="width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;">
+                            <option value="Percentage">Theo phần trăm (%)</option>
+                            <option value="Fixed">Tiền mặt (VNĐ)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Giá trị <span style="color: red;">*</span></label>
+                        <input type="number" id="coupon-value" required min="0" step="0.01" style="width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;" placeholder="VD: 50">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Đơn hàng tối thiểu (VNĐ)</label>
+                    <input type="number" id="coupon-min-order" min="0" step="1000" value="0" style="width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;" placeholder="0">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Số lượng <span style="color: red;">*</span></label>
+                    <input type="number" id="coupon-quantity" required min="1" step="1" value="1" style="width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;" placeholder="VD: 100">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Ngày bắt đầu <span style="color: red;">*</span></label>
+                        <input type="datetime-local" id="coupon-start-date" required style="width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Ngày kết thúc <span style="color: red;">*</span></label>
+                        <input type="datetime-local" id="coupon-end-date" required style="width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" id="btn-cancel-modal" style="padding: 12px 24px; border: 1px solid #dee2e6; background: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">Hủy</button>
+                    <button type="submit" style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/promotions.js"></script>
+</body>
+</html>

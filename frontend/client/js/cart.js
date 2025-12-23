@@ -316,30 +316,8 @@ async function initCheckoutPage() {
         console.error("Lỗi tải profile:", err);
     }
 
-    // 4. Xử lý Submit Form (Đặt hàng)
-    const form = document.getElementById('checkout-form');
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const data = {
-                hoTen: document.getElementById('name').value,
-                soDienThoai: document.getElementById('phone').value,
-                diaChi: document.getElementById('address').value,
-                phuongThucTT: document.getElementById('method').value,
-                listItems: selectedItems
-            };
-
-            const res = await API.post('/orders', data);
-            if (res.orderId) {
-                localStorage.removeItem('checkout_items');
-                alert('Đặt hàng thành công! Mã đơn: ' + res.orderId);
-                window.location.href = 'index.html';
-            } else {
-                alert('Lỗi: ' + res.message);
-            }
-        });
-    }
+    // KHÔNG xử lý submit ở đây nữa, để checkout.html xử lý
+    // Vì checkout.html đã có logic đầy đủ với mã giảm giá
 }
 
 // Helper: Hàm điền form nhanh

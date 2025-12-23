@@ -1,9 +1,102 @@
 // backend/server/controllers/orderController.js
 const { connectDB, sql } = require('../config/dbConfig');
 
+// API kiểm tra và áp dụng mã giảm giá
+exports.checkCoupon = async (req, res) => {
+    const { code, totalOrderValue } = req.body;
+
+    try {
+        if (!code || !totalOrderValue) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Thiếu thông tin mã giảm giá hoặc tổng tiền đơn hàng!' 
+            });
+        }
+
+        const pool = await connectDB();
+        const request = pool.request();
+        request.input('Code', sql.VarChar, code.toUpperCase());
+
+        // Tìm mã trong DB
+        const result = await request.query('SELECT * FROM MaGiamGia WHERE Code = @Code');
+        
+        if (result.recordset.length === 0) {
+            return res.json({ 
+                success: false, 
+                message: 'Mã giảm giá không tồn tại!' 
+            });
+        }
+
+        const coupon = result.recordset[0];
+        const now = new Date();
+        const ngayBatDau = new Date(coupon.NgayBatDau);
+        const ngayKetThuc = new Date(coupon.NgayKetThuc);
+
+        // Kiểm tra ngày hết hạn
+        if (now < ngayBatDau) {
+            return res.json({ 
+                success: false, 
+                message: 'Mã giảm giá chưa đến ngày sử dụng!' 
+            });
+        }
+
+        if (now > ngayKetThuc) {
+            return res.json({ 
+                success: false, 
+                message: 'Mã giảm giá đã hết hạn!' 
+            });
+        }
+
+        // Kiểm tra số lượng
+        if (coupon.SoLuong <= 0) {
+            return res.json({ 
+                success: false, 
+                message: 'Mã giảm giá đã hết lượt sử dụng!' 
+            });
+        }
+
+        // Kiểm tra điều kiện đơn tối thiểu
+        if (totalOrderValue < coupon.DonHangToiThieu) {
+            return res.json({ 
+                success: false, 
+                message: `Đơn hàng tối thiểu ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(coupon.DonHangToiThieu)} để sử dụng mã này!` 
+            });
+        }
+
+        // Tính số tiền giảm
+        let discountAmount = 0;
+        if (coupon.LoaiGiamGia === 'Percentage') {
+            discountAmount = (totalOrderValue * coupon.GiaTri) / 100;
+        } else {
+            discountAmount = coupon.GiaTri;
+        }
+
+        // Đảm bảo tiền giảm không vượt quá tổng tiền
+        if (discountAmount > totalOrderValue) {
+            discountAmount = totalOrderValue;
+        }
+
+        const finalTotal = totalOrderValue - discountAmount;
+
+        res.json({
+            success: true,
+            discountAmount: discountAmount,
+            finalTotal: finalTotal,
+            message: 'Áp dụng mã giảm giá thành công!'
+        });
+
+    } catch (error) {
+        console.error('Error checking coupon:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Lỗi server khi kiểm tra mã giảm giá!' 
+        });
+    }
+};
+
 exports.createOrder = async (req, res) => {
-    // 1. Nhận listItems từ req.body
-    const { hoTen, diaChi, soDienThoai, phuongThucTT, listItems } = req.body;
+    // 1. Nhận listItems và MaGiamGia từ req.body
+    const { hoTen, diaChi, soDienThoai, phuongThucTT, listItems, maGiamGia } = req.body;
     const userId = req.user.id;
     const pool = await connectDB();
     const transaction = new sql.Transaction(pool);
@@ -42,21 +135,65 @@ exports.createOrder = async (req, res) => {
 
         if (cartItems.recordset.length === 0) throw new Error('Giỏ hàng trống hoặc sản phẩm chọn không hợp lệ!');
 
-        const totalAmount = cartItems.recordset.reduce((sum, item) => sum + (item.SoLuong * item.Gia), 0);
+        let totalAmount = cartItems.recordset.reduce((sum, item) => sum + (item.SoLuong * item.Gia), 0);
 
-        // 3. Insert DonHang với COLLATE Vietnamese_CI_AS
+        // 2.5. Xử lý mã giảm giá (nếu có)
+        let discountAmount = 0;
+        if (maGiamGia) {
+            try {
+                const couponReq = new sql.Request(transaction);
+                couponReq.input('Code', sql.VarChar, maGiamGia.toUpperCase());
+                const couponResult = await couponReq.query('SELECT * FROM MaGiamGia WHERE Code = @Code');
+                
+                if (couponResult.recordset.length > 0) {
+                    const coupon = couponResult.recordset[0];
+                    const now = new Date();
+                    const ngayBatDau = new Date(coupon.NgayBatDau);
+                    const ngayKetThuc = new Date(coupon.NgayKetThuc);
+
+                    // Kiểm tra điều kiện sử dụng mã
+                    if (now >= ngayBatDau && now <= ngayKetThuc && coupon.SoLuong > 0 && totalAmount >= coupon.DonHangToiThieu) {
+                        // Tính số tiền giảm
+                        if (coupon.LoaiGiamGia === 'Percentage') {
+                            discountAmount = (totalAmount * coupon.GiaTri) / 100;
+                        } else {
+                            discountAmount = coupon.GiaTri;
+                        }
+
+                        // Đảm bảo không giảm quá tổng tiền
+                        if (discountAmount > totalAmount) {
+                            discountAmount = totalAmount;
+                        }
+
+                        // Trừ số lượng mã (giảm 1)
+                        const updateCouponReq = new sql.Request(transaction);
+                        updateCouponReq.input('Code', sql.VarChar, maGiamGia.toUpperCase());
+                        await updateCouponReq.query('UPDATE MaGiamGia SET SoLuong = SoLuong - 1 WHERE Code = @Code');
+                    }
+                }
+            } catch (err) {
+                console.error('Lỗi khi xử lý mã giảm giá:', err);
+                // Không throw error, chỉ log để đơn hàng vẫn được tạo
+            }
+        }
+
+        // Tính tổng tiền sau giảm giá
+        const finalTotal = totalAmount - discountAmount;
+
+        // 3. Insert DonHang với COLLATE Vietnamese_CI_AS và MaGiamGia
         const orderReq = new sql.Request(transaction);
         orderReq.input('UserId', sql.Int, userId)
                 .input('Name', sql.NVarChar, hoTen)
                 .input('Addr', sql.NVarChar, diaChi)
                 .input('Phone', sql.VarChar, soDienThoai)
-                .input('Total', sql.Decimal, totalAmount)
+                .input('Total', sql.Decimal, finalTotal)  // ✅ Lưu tổng tiền sau giảm
                 .input('Method', sql.NVarChar, phuongThucTT)
-                .input('Status', sql.NVarChar, 'Chờ xác nhận');  // ✅ Thêm trạng thái mặc định
+                .input('Status', sql.NVarChar, 'Chờ xác nhận')
+                .input('MaGiamGia', sql.VarChar, maGiamGia || null);  // ✅ Thêm mã giảm giá
         
         const orderRes = await orderReq.query(`
-            INSERT INTO DonHang (MaNguoiDung, HoTenNguoiNhan, DiaChiGiaoHang, SoDienThoaiGiaoHang, TongTien, PhuongThucThanhToan, TrangThai)
-            VALUES (@UserId, @Name COLLATE Vietnamese_CI_AS, @Addr COLLATE Vietnamese_CI_AS, @Phone, @Total, @Method COLLATE Vietnamese_CI_AS, @Status COLLATE Vietnamese_CI_AS);
+            INSERT INTO DonHang (MaNguoiDung, HoTenNguoiNhan, DiaChiGiaoHang, SoDienThoaiGiaoHang, TongTien, PhuongThucThanhToan, TrangThai, MaGiamGia)
+            VALUES (@UserId, @Name COLLATE Vietnamese_CI_AS, @Addr COLLATE Vietnamese_CI_AS, @Phone, @Total, @Method COLLATE Vietnamese_CI_AS, @Status COLLATE Vietnamese_CI_AS, @MaGiamGia);
             SELECT SCOPE_IDENTITY() AS MaDonHang;
         `);
         const newOrderId = orderRes.recordset[0].MaDonHang;
