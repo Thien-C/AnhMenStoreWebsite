@@ -14,6 +14,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const adminOrderRoutes = require('./routes/admin/orderRoutes');
 const adminProductRoutes = require('./routes/admin/productRoutes');
 const adminCouponRoutes = require('./routes/admin/couponRoutes');
+const adminReportRoutes = require('./routes/admin/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/admin/products', adminProductRoutes);
 app.use('/api/admin/coupons', adminCouponRoutes);
+app.use('/api/admin/reports', adminReportRoutes);
 app.use('/api/upload', uploadRoutes);
 
 // Serve static files từ thư mục asset (cho ảnh sản phẩm)

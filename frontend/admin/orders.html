@@ -33,6 +33,9 @@
                 <a href="promotions.html" class="nav-item">
                     <span>Khuyến mãi</span>
                 </a>
+                <a href="reports.html" class="nav-item">
+                    <span>Báo cáo doanh thu</span>
+                </a>
                 <button id="btn-logout" class="nav-item logout">
                     <span>Đăng xuất</span>
                 </button>
@@ -86,6 +89,15 @@
     <script src="../client/js/api.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/orders.js"></script>
+    <script>
+        // Ẩn sidebar và header khi được embed trong iframe
+        if (window.location.search.includes('embed=true')) {
+            document.querySelector('.sidebar').style.display = 'none';
+            document.querySelector('.header').style.display = 'none';
+            document.querySelector('.main').style.marginLeft = '0';
+            document.querySelector('.main').style.width = '100%';
+        }
+    </script>
 </body>
 </html>
 
