@@ -112,20 +112,20 @@ function renderCoupons(coupons) {
 
         return `
             <tr style="border-bottom: 1px solid #dee2e6;">
-                <td style="padding: 12px; font-weight: 600; color: #495057;">${coupon.Code}</td>
-                <td style="padding: 12px; color: #6c757d; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${coupon.MoTa || ''}">${coupon.MoTa || '-'}</td>
-                <td style="padding: 12px; color: #6c757d;">${coupon.LoaiGiamGia === 'Percentage' ? 'Phần trăm' : 'Tiền mặt'}</td>
-                <td style="padding: 12px; font-weight: 600; color: #667eea;">${giaTriDisplay}</td>
-                <td style="padding: 12px; color: #6c757d;">${formatCurrency(coupon.DonHangToiThieu)}</td>
-                <td style="padding: 12px; text-align: center; font-weight: 600;">${coupon.SoLuong}</td>
-                <td style="padding: 12px; color: #6c757d;">${formatDate(coupon.NgayBatDau)}</td>
-                <td style="padding: 12px; color: #6c757d;">${formatDate(coupon.NgayKetThuc)}</td>
-                <td style="padding: 12px;">
-                    <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; color: ${statusColor}; background: ${statusBg};">
+                <td style="padding: 12px; font-weight: 600; color: #495057; white-space: nowrap; vertical-align: middle;">${coupon.Code}</td>
+                <td style="padding: 12px; color: #6c757d; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;" title="${coupon.MoTa || ''}">${coupon.MoTa || '-'}</td>
+                <td style="padding: 12px; color: #6c757d; white-space: nowrap; vertical-align: middle;">${coupon.LoaiGiamGia === 'Percentage' ? 'Phần trăm' : 'Tiền mặt'}</td>
+                <td style="padding: 12px; font-weight: 600; color: #667eea; white-space: nowrap; vertical-align: middle; text-align: center;">${giaTriDisplay}</td>
+                <td style="padding: 12px; color: #6c757d; white-space: nowrap; vertical-align: middle; text-align: center;">${formatCurrency(coupon.DonHangToiThieu)}</td>
+                <td style="padding: 12px; text-align: center; font-weight: 600; white-space: nowrap; vertical-align: middle;">${coupon.SoLuong}</td>
+                <td style="padding: 12px; color: #6c757d; white-space: nowrap; vertical-align: middle;">${formatDate(coupon.NgayBatDau)}</td>
+                <td style="padding: 12px; color: #6c757d; white-space: nowrap; vertical-align: middle;">${formatDate(coupon.NgayKetThuc)}</td>
+                <td style="padding: 12px; white-space: nowrap; vertical-align: middle;">
+                    <span style="padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; color: ${statusColor}; background: ${statusBg}; white-space: nowrap;">
                         ${coupon.TrangThai}
                     </span>
                 </td>
-                <td style="padding: 12px;">
+                <td style="padding: 12px; white-space: nowrap; vertical-align: middle;">
                     <button onclick="editCoupon(${coupon.MaCoupon})" style="padding: 6px 12px; background: #17a2b8; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 4px; font-size: 12px;">Sửa</button>
                     <button onclick="deleteCoupon(${coupon.MaCoupon})" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">Xóa</button>
                 </td>
