@@ -173,9 +173,14 @@ class CartManager {
                                 <button onclick="CartManager.updateQuantity(${updateId}, ${item.SoLuong - 1}, ${maxStock})" 
                                         class="px-2 hover:bg-gray-100 text-gray-600">-</button>
                                 
-                                <input type="number" value="${item.SoLuong}" 
+                                <input type="number" 
+                                    value="${item.SoLuong}" 
+                                    min="1"
+                                    max="${maxStock}"
                                     class="w-12 text-center text-sm focus:outline-none h-full"
-                                    readonly>
+                                    onchange="CartManager.updateQuantity(${updateId}, this.value, ${maxStock})"
+                                    onblur="CartManager.updateQuantity(${updateId}, this.value, ${maxStock})"
+                                    onclick="this.select()">
                                 
                                 <button onclick="CartManager.updateQuantity(${updateId}, ${item.SoLuong + 1}, ${maxStock})" 
                                         class="px-2 hover:bg-gray-100 text-gray-600">+</button>
